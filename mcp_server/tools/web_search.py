@@ -1,6 +1,8 @@
 """
 Web Search Tool for MCP Server
-Wraps legitimate web search APIs (Serper, Brave, Bing) with caching and logging
+Wraps legitimate web search APIs (Serper, Brave) with caching and logging
+
+REQUIRES API KEY - No mock implementation available.
 """
 
 import os
@@ -23,6 +25,11 @@ from ..utils.cache import web_search_cache
 from ..utils.logger import tool_logger, setup_logging
 
 logger = setup_logging()
+
+
+class WebSearchConfigError(Exception):
+    """Raised when web search API is not properly configured."""
+    pass
 
 
 @dataclass
@@ -52,12 +59,11 @@ class WebSearchResult:
 
 class WebSearchTool:
     """
-    Web Search Tool implementation.
+    Web Search Tool implementation (LLM-powered, no mock).
     
     Supports multiple search providers:
-    - Serper (Google Search API)
-    - Brave Search API
-    - Bing Search API
+    - Serper (Google Search API) - https://serper.dev
+    - Brave Search API - https://brave.com/search/api
     
     Features:
     - TTL-based caching (60-300 seconds)
@@ -65,6 +71,9 @@ class WebSearchTool:
     - Rate limiting
     - Price extraction from snippets
     - Domain allowlist for safety
+    
+    REQUIRES:
+    - SERPER_API_KEY or BRAVE_API_KEY environment variable
     """
     
     def __init__(
@@ -73,9 +82,12 @@ class WebSearchTool:
         api_key: str = WEB_SEARCH_API_KEY,
         base_url: str = WEB_SEARCH_BASE_URL
     ):
-        self.provider = provider
+        self.provider = provider.lower()
         self.api_key = api_key
         self.base_url = base_url
+        
+        # Validate configuration - NO MOCK ALLOWED
+        self._validate_config()
         
         # Rate limiting
         self._request_timestamps: list[float] = []
@@ -83,6 +95,29 @@ class WebSearchTool:
         
         # HTTP client
         self._client = httpx.Client(timeout=30.0)
+        
+        logger.info(f"WebSearchTool initialized with provider: {self.provider}")
+    
+    def _validate_config(self) -> None:
+        """Validate that API key is configured. Raises error if not."""
+        if not self.api_key:
+            raise WebSearchConfigError(
+                f"Web Search API key is required!\n"
+                f"Provider: {self.provider}\n"
+                f"Please set one of these environment variables:\n"
+                f"  - SERPER_API_KEY (get free key at https://serper.dev)\n"
+                f"  - BRAVE_API_KEY (get key at https://brave.com/search/api)\n"
+                f"  - WEB_SEARCH_API_KEY\n"
+                f"\nExample:\n"
+                f"  export SERPER_API_KEY='your_api_key_here'"
+            )
+        
+        if self.provider not in ["serper", "brave"]:
+            raise WebSearchConfigError(
+                f"Unsupported web search provider: {self.provider}\n"
+                f"Supported providers: serper, brave\n"
+                f"Set WEB_SEARCH_PROVIDER environment variable."
+            )
     
     def search(
         self,
@@ -131,11 +166,9 @@ class WebSearchTool:
                 results = self._search_serper(enhanced_query, num_results)
             elif self.provider == "brave":
                 results = self._search_brave(enhanced_query, num_results)
-            elif self.provider == "mock":
-                results = self._search_mock(enhanced_query, num_results)
             else:
-                # Default to mock for development
-                results = self._search_mock(enhanced_query, num_results)
+                # Should never reach here due to validation
+                raise WebSearchConfigError(f"Unsupported provider: {self.provider}")
             
             # Process and filter results
             processed_results = self._process_results(results, filters)
@@ -178,7 +211,7 @@ class WebSearchTool:
         parts = [query]
         
         if filters.get("max_price"):
-            parts.append(f"under ${filters['max_price']}")
+            parts.append(f"under \${filters['max_price']}")
         
         if filters.get("brand"):
             parts.append(f"{filters['brand']} brand")
@@ -194,10 +227,6 @@ class WebSearchTool:
     
     def _search_serper(self, query: str, num_results: int) -> list[dict]:
         """Search using Serper (Google Search API)."""
-        if not self.api_key:
-            logger.warning("No Serper API key, falling back to mock")
-            return self._search_mock(query, num_results)
-        
         headers = {
             "X-API-KEY": self.api_key,
             "Content-Type": "application/json"
@@ -205,10 +234,12 @@ class WebSearchTool:
         
         payload = {
             "q": query,
-            "num": num_results * 2,  # Get extra for filtering
+            "num": num_results * 2,
             "gl": "us",
             "hl": "en"
         }
+        
+        logger.info(f"Serper API call: {query[:50]}...")
         
         response = self._client.post(
             self.base_url,
@@ -239,14 +270,11 @@ class WebSearchTool:
                 "source": item.get("source", "")
             })
         
+        logger.info(f"Serper returned {len(results)} results")
         return results
     
     def _search_brave(self, query: str, num_results: int) -> list[dict]:
         """Search using Brave Search API."""
-        if not self.api_key:
-            logger.warning("No Brave API key, falling back to mock")
-            return self._search_mock(query, num_results)
-        
         headers = {
             "X-Subscription-Token": self.api_key,
             "Accept": "application/json"
@@ -256,6 +284,8 @@ class WebSearchTool:
             "q": query,
             "count": num_results * 2
         }
+        
+        logger.info(f"Brave API call: {query[:50]}...")
         
         response = self._client.get(
             "https://api.search.brave.com/res/v1/web/search",
@@ -275,115 +305,24 @@ class WebSearchTool:
                 "source": urlparse(item.get("url", "")).netloc
             })
         
+        logger.info(f"Brave returned {len(results)} results")
         return results
-    
-    def _search_mock(self, query: str, num_results: int) -> list[dict]:
-        """
-        Mock search for development/testing.
-        Returns realistic-looking results based on query.
-        """
-        logger.info(f"Using mock search for query: {query}")
-        
-        # Extract key terms from query
-        query_lower = query.lower()
-        
-        # Generate mock results based on common product searches
-        mock_results = []
-        
-        if "game" in query_lower or "board" in query_lower or "card" in query_lower or "dice" in query_lower:
-            mock_results = [
-                {
-                    "title": "Pandemic Board Game - Cooperative Strategy Game",
-                    "url": "https://amazon.com/dp/B00A2HD40E",
-                    "snippet": "Award-winning cooperative board game where 2-4 players work together as disease-fighting specialists. "
-                              "Save humanity from four deadly diseases spreading across the globe.",
-                    "price": 29.99,
-                    "availability": "In Stock",
-                    "source": "amazon.com"
-                },
-                {
-                    "title": "Catan Board Game - Strategy Trading Game",
-                    "url": "https://amazon.com/dp/B00U26V4VQ",
-                    "snippet": "Classic strategy board game for 3-4 players. Build settlements, trade resources, "
-                              "and become the Lord of Catan. Ages 10 and up.",
-                    "price": 44.99,
-                    "availability": "In Stock",
-                    "source": "amazon.com"
-                },
-                {
-                    "title": "Exploding Kittens Card Game",
-                    "url": "https://amazon.com/dp/B010TQY7A8",
-                    "snippet": "Highly strategic kitty-powered version of Russian Roulette. "
-                              "Family-friendly party game for 2-5 players.",
-                    "price": 19.99,
-                    "availability": "In Stock",
-                    "source": "amazon.com"
-                },
-                {
-                    "title": "Ticket to Ride Board Game",
-                    "url": "https://walmart.com/ip/55066843",
-                    "snippet": "Cross-country train adventure game. Collect train cards to claim railway routes. "
-                              "2-5 players, ages 8 and up.",
-                    "price": 39.97,
-                    "availability": "In Stock",
-                    "source": "walmart.com"
-                },
-                {
-                    "title": "Codenames - Word Association Party Game",
-                    "url": "https://target.com/p/codenames-game",
-                    "snippet": "Award-winning social word game for 2-8+ players. "
-                              "Give one-word clues to help your team guess secret agents.",
-                    "price": 14.99,
-                    "availability": "In Stock",
-                    "source": "target.com"
-                },
-                {
-                    "title": "Uno Card Game - Classic Family Game",
-                    "url": "https://amazon.com/dp/B00004TZY8",
-                    "snippet": "The classic card matching game. Match colors and numbers, "
-                              "use action cards to change the game. 2-10 players.",
-                    "price": 7.99,
-                    "availability": "In Stock",
-                    "source": "amazon.com"
-                }
-            ]
-        else:
-            # Generic mock results for other queries
-            mock_results = [
-                {
-                    "title": f"Top Rated Product for {query[:30]}",
-                    "url": f"https://amazon.com/dp/B0MOCK{i:04d}",
-                    "snippet": f"Highly rated product matching your search for {query[:50]}. "
-                              "Great reviews from thousands of customers.",
-                    "price": 10.99 + i * 5,
-                    "availability": "In Stock",
-                    "source": "amazon.com"
-                }
-                for i in range(num_results)
-            ]
-        
-        return mock_results[:num_results * 2]
     
     def _process_results(self, results: list[dict], filters: dict) -> list[dict]:
         """Process and filter search results."""
         processed = []
         
         for result in results:
-            # Extract domain
             url = result.get("url", "")
             domain = urlparse(url).netloc.replace("www.", "")
             
-            # Skip if domain not in allowlist (when strict mode enabled)
-            # For now, we allow all domains but log warnings
             if domain and not any(allowed in domain for allowed in ALLOWED_DOMAINS):
                 logger.debug(f"Non-allowlisted domain: {domain}")
             
-            # Try to extract price from snippet if not provided
             price = result.get("price")
             if price is None:
                 price = self._extract_price(result.get("snippet", "") + " " + result.get("title", ""))
             
-            # Apply price filters
             if filters.get("max_price") and price and price > filters["max_price"]:
                 continue
             if filters.get("min_price") and price and price < filters["min_price"]:
@@ -405,11 +344,10 @@ class WebSearchTool:
         if not text:
             return None
         
-        # Common price patterns
         patterns = [
-            r'\$(\d+\.?\d*)',           # $12.99
-            r'(\d+\.?\d*)\s*(?:USD|dollars?)',  # 12.99 USD
-            r'price[:\s]+\$?(\d+\.?\d*)',  # price: 12.99
+            r'\$(\d+\.?\d*)',
+            r'(\d+\.?\d*)\s*(?:USD|dollars?)',
+            r'price[:\s]+\$?(\d+\.?\d*)',
         ]
         
         for pattern in patterns:
@@ -427,7 +365,6 @@ class WebSearchTool:
         if not price_str:
             return None
         
-        # Remove currency symbols and parse
         cleaned = re.sub(r'[^\d.]', '', str(price_str))
         try:
             return float(cleaned) if cleaned else None
@@ -438,20 +375,17 @@ class WebSearchTool:
         """Check and enforce rate limiting."""
         current_time = time.time()
         
-        # Remove timestamps older than 1 minute
         self._request_timestamps = [
             ts for ts in self._request_timestamps
             if current_time - ts < 60
         ]
         
-        # Check if we've exceeded the limit
         if len(self._request_timestamps) >= self._rate_limit:
             wait_time = 60 - (current_time - self._request_timestamps[0])
             if wait_time > 0:
                 logger.warning(f"Rate limit reached, waiting {wait_time:.2f}s")
                 time.sleep(wait_time)
         
-        # Record this request
         self._request_timestamps.append(current_time)
     
     def close(self) -> None:
@@ -465,14 +399,17 @@ class WebSearchTool:
         self.close()
 
 
-# Global instance for convenience
 _web_search_tool: Optional[WebSearchTool] = None
 
 
 def get_web_search_tool() -> WebSearchTool:
-    """Get or create the global WebSearchTool instance."""
+    """
+    Get or create the global WebSearchTool instance.
+    
+    Raises:
+        WebSearchConfigError: If API key is not configured
+    """
     global _web_search_tool
     if _web_search_tool is None:
         _web_search_tool = WebSearchTool()
     return _web_search_tool
-
