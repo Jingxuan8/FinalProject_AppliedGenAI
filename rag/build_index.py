@@ -6,7 +6,9 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 from chromadb.config import Settings
 
-DATA_DIR = Path("data")
+# Use absolute paths based on project root
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  # rag/ -> project root
+DATA_DIR = PROJECT_ROOT / "data"
 PROCESSED_PATH = DATA_DIR / "processed" / "games_accessories.parquet"
 VECTOR_DIR = DATA_DIR / "vector_store"
 VECTOR_DIR.mkdir(parents=True, exist_ok=True)
