@@ -1,32 +1,34 @@
 # agent_graph/__init__.py
 
 """
-agent_graph package initializer.
+AgentGraph package initializer.
 
-Exports:
-- build_graph
-- run_pipeline
-- MCPClient
-- all agent nodes
+This package provides:
+- create_graph(): the compiled LangGraph pipeline
+- AgentState: shared state wrapper for all nodes
+- Router, Planner, Retriever, Critic, Answerer
+- MCPClientWrapper for tool calling
+
+Legacy function-based nodes (router_node, planner_node, etc.)
+and build_graph/run_pipeline are removed and should NOT be used.
 """
 
-from agent_graph.graph import build_graph, run_pipeline
-from agent_graph.mcp_client import MCPClientWrapper
-
-
-from agent_graph.router import router_node
-from agent_graph.planner import planner_node
-from agent_graph.retriever import retriever_node
-from agent_graph.critic import critic_node
-from agent_graph.answerer import answerer_node
+from .graph import create_graph
+from .state import AgentState
+from .router import Router
+from .planner import Planner
+from .retriever import Retriever
+from .critic import Critic
+from .answerer import Answerer
+from .mcp_client import MCPClientWrapper
 
 __all__ = [
-    "build_graph",
-    "run_pipeline",
+    "create_graph",
+    "AgentState",
+    "Router",
+    "Planner",
+    "Retriever",
+    "Critic",
+    "Answerer",
     "MCPClientWrapper",
-    "router_node",
-    "planner_node",
-    "retriever_node",
-    "critic_node",
-    "answerer_node",
 ]

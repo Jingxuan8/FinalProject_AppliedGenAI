@@ -1,170 +1,99 @@
 # agent_graph/answerer.py
 
-"""
-Answerer node for LangGraph orchestration.
-
-Responsibilities:
-- Convert retrieved product results into a grounded, concise final answer.
-- Include citations (doc_id for RAG results, source domain for web results).
-- Avoid hallucinations: only reference retrieved fields.
-- Produce a short, user-friendly summary suitable for TTS.
-"""
-
 from __future__ import annotations
+from typing import Dict, Any, List
 
-from typing import Any, Dict, List
-
-from agent_graph.state import GraphState
-
-
-# ------------------------------------------------------------
-# ANSWERER SYSTEM PROMPT
-# ------------------------------------------------------------
-
-ANSWERER_PROMPT = """
-You are the Answerer Agent for an e-commerce product assistant.
-
-Your rules:
-1. Use ONLY the data provided in the tool results. Do NOT hallucinate.
-2. All claims MUST be grounded in the retrieved products.
-3. Cite sources:
-   - For catalog (rag.search) products: cite as [doc_id: XXXXX].
-   - For web results: cite as [source: domain].
-4. Keep the answer concise (aim for < 10 seconds of speech).
-5. If both catalog and web results are present, prefer catalog for:
-      title, brand, rating, features
-   Prefer web for:
-      current price, availability
-6. If no results: apologize briefly and ask the user to clarify.
-
-Output: final answer text only (no JSON).
-"""
+from .state import AgentState
 
 
-# ------------------------------------------------------------
-# Utility: Format a single product line
-# ------------------------------------------------------------
-
-def format_catalog_product(p: Dict[str, Any]) -> str:
+class Answerer:
     """
-    Format a catalog (RAG) product into 1–2 short sentences.
-    """
-    title = p.get("title", "Unknown Product")
-    price = p.get("price")
-    brand = p.get("brand")
-    rating = p.get("rating")
-    doc_id = p.get("doc_id")
+    Final Answer Agent.
+    Summarizes retrieved product results into a grounded natural-language response.
 
-    parts = [title]
-    if brand:
-        parts.append(f"by {brand}")
-    if price:
-        parts.append(f"priced around ${price:.2f}")
-    if rating:
-        parts.append(f"rated {rating} stars")
-
-    summary = ", ".join(parts)
-    return f"{summary} [doc_id: {doc_id}]"
-
-
-def format_web_product(p: Dict[str, Any]) -> str:
-    """
-    Format a web product into 1–2 short sentences.
-    """
-    title = p.get("title", "Unknown Product")
-    price = p.get("price")
-    source = p.get("source", "web")
-    availability = p.get("availability")
-
-    parts = [title]
-    if price:
-        parts.append(f"currently ${price:.2f}")
-    if availability:
-        parts.append(f"{availability}")
-
-    summary = ", ".join(parts)
-    return f"{summary} [source: {source}]"
-
-
-# ------------------------------------------------------------
-# LLM call for answer generation
-# ------------------------------------------------------------
-
-def call_llm_answerer(model, query: str, rag_results, web_results) -> str:
-    """
-    LLM decides how to combine the retrieved results into a final grounded answer.
+    Requirements:
+    - No hallucination (only use fields present in retrieved data)
+    - Respect safety_flag set by Router
+    - Format responses consistently
+    - Distinguish between RAG-based and Web-based results
     """
 
-    import json
+    def _format_item(self, item: Dict[str, Any]) -> str:
+        """Format one product into a clean bullet point."""
+        title = item.get("title", "Unknown Product")
+        price = item.get("price")
+        brand = item.get("brand")
+        category = item.get("category")
+        url = item.get("product_url") or item.get("url")
 
-    response = model.chat.completions.create(
-        model=model.model_name,
-        messages=[
-            {"role": "system", "content": ANSWERER_PROMPT},
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {
-                        "query": query,
-                        "catalog_results": rag_results,
-                        "web_results": web_results,
-                    },
-                    indent=2
-                ),
-            },
-        ],
-        temperature=0,
-        max_tokens=300,
-    )
+        parts = [f"**{title}**"]
 
-    return response.choices[0].message.content.strip()
+        if brand:
+            parts.append(f"Brand: {brand}")
 
+        if price is not None:
+            parts.append(f"Price: ${price}")
 
-# ------------------------------------------------------------
-# Answerer Node
-# ------------------------------------------------------------
+        if category:
+            parts.append(f"Category: {category}")
 
-def answerer_node(state: GraphState, model) -> GraphState:
-    """
-    Produces the final natural-language answer using LLM and retrieved results.
-    """
+        if url:
+            parts.append(f"[Link]({url})")
 
-    rag = state.get("rag_results", [])
-    web = state.get("web_results", [])
+        return " | ".join(parts)
 
-    # If no results at all:
-    if not rag and not web:
-        final = (
-            "I couldn’t find matching products. "
-            "Could you rephrase or include more details?"
-        )
+    # ------------------------------------------------------------
+    # Main LangGraph entry point
+    # ------------------------------------------------------------
+    def __call__(self, state: AgentState) -> Dict[str, Any]:
+
+        # ==========================================================
+        # SAFETY CHECK
+        # ==========================================================
+        if getattr(state, "safety_flag", False):
+            return {
+                "final_answer": (
+                    "I'm sorry, but I can’t assist with that request."
+                )
+            }
+
+        results: List[Dict[str, Any]] = state.merged_results or []
+        source = getattr(state, "retrieval_source", None)
+
+        # ==========================================================
+        # NO RESULTS → graceful fallback
+        # ==========================================================
+        if not results:
+            return {
+                "final_answer": (
+                    "I couldn't find matching products for your query. "
+                    "Try adjusting your constraints or rephrasing your request."
+                )
+            }
+
+        # ==========================================================
+        # INTRO TEXT BASED ON SOURCE
+        # ==========================================================
+        if source == "rag":
+            intro = "Here are the top matches from our product catalog:\n\n"
+        elif source == "web":
+            intro = "Here are the most relevant live web results:\n\n"
+        else:
+            intro = "Here are the best matched products:\n\n"
+
+        # ==========================================================
+        # FORMAT BULLET LIST
+        # ==========================================================
+        bullets = "\n".join(f"- {self._format_item(item)}" for item in results)
+
+        final_answer = intro + bullets
+
+        debug_msg = f"[ANSWERER] produced_answer_with_{source or 'unknown'}"
+
         return {
-            **state,
-            "final_answer": final,
-            "debug_log": state.get("debug_log", []) + ["[ANSWERER] no results"],
+            "final_answer": final_answer,
+            "debug_log": state.debug_log + [debug_msg],
         }
 
-    # LLM generates the final answer
-    final = call_llm_answerer(
-        model,
-        state["user_query"],
-        rag,
-        web,
-    )
 
-    debug_msg = f"[ANSWERER] produced response ({len(final)} chars)"
-
-    return {
-        **state,
-        "final_answer": final,
-        "debug_log": state.get("debug_log", []) + [debug_msg],
-    }
-
-
-__all__ = [
-    "answerer_node",
-    "call_llm_answerer",
-    "format_catalog_product",
-    "format_web_product",
-    "ANSWERER_PROMPT",
-]
+__all__ = ["Answerer"]

@@ -1,148 +1,104 @@
 # agent_graph/planner.py
 
 """
-Planner node for LangGraph orchestration.
+Planner Agent for Agentic Orchestration.
 
-Responsibilities:
-- Interpret router output (intent + constraints + need_live_price)
-- Decide which tools to call this turn:
-    * rag.search (default)
-    * web.search (if live price or availability)
-    * both (if comparing catalog vs real-time data)
-- Construct argument payloads for each tool
-- Decide whether LLM-based reranking should be enabled
+Decides:
+- Which source to use (rag or web)
+- What filters to apply
+- What the retriever should do
+
+We FIX:
+- Proper category canonicalization
+- Filtering logic for RAG
+- Avoid unsupported fields for MCP tools
 """
 
 from __future__ import annotations
-
-from typing import Any, Dict, Optional
-
-from agent_graph.state import GraphState, AgentPlan
-
+from typing import Dict, Any
+from .state import AgentState
 
 # ------------------------------------------------------------
-# Core planner rules (summarized from tool_prompts.md)
+# CATEGORY NORMALIZATION TABLE
 # ------------------------------------------------------------
 
-PLANNER_SYSTEM_RULES = """
-You are the Planner Agent for an e-commerce product system.
-
-Your job:
-1. Decide which tools to call: rag.search, web.search, or both.
-2. Prepare arguments for each tool.
-3. Follow these rules:
-
-RULES:
-- Prefer rag.search for detailed product search:
-    * features, specs, ratings, product info
-    * category-based search (e.g., board games, card games)
-    * price filtering, brand filtering, rating filtering
-
-- Use web.search when the user asks about:
-    * "current price"
-    * "now"
-    * "latest"
-    * "availability"
-    * "in stock"
-
-- When comparing catalog vs market price → call BOTH:
-    rag.search first, then web.search.
-
-- Enable rag.search rerank=True only when user wants:
-    * "best"
-    * "most relevant"
-    * "top recommendation"
-    * "optimal"
-    * "ranked"
-
-- Do NOT hallucinate fields. Only include arguments the tools accept.
-
-OUTPUT JSON ONLY:
-{
-  "use_rag": true/false,
-  "use_web": true/false,
-  "rerank": true/false,
-  "rag_kwargs": { ... },
-  "web_kwargs": { ... },
-  "reason": "short human explanation"
+CATEGORY_MAP = {
+    "board game": "Board Games",
+    "board games": "Board Games",
+    "card game": "Card Games",
+    "card games": "Card Games",
+    "dice game": "Dice Games",
+    "dice games": "Dice Games",
+    "controller": "Controllers",
+    "controllers": "Controllers",
+    "mouse": "Mice",
+    "mice": "Mice",
 }
-"""
+
+def normalize_category(cat: str | None) -> str | None:
+    if not cat:
+        return None
+    key = cat.strip().lower()
+    return CATEGORY_MAP.get(key, None)
 
 
 # ------------------------------------------------------------
-# LLM call wrapper
+# PLANNER CLASS
 # ------------------------------------------------------------
 
-def call_llm_planner(model, router_info: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Asks the LLM to produce a tool-use plan.
-    `router_info` includes intent, constraints, need_live_price.
-    """
+class Planner:
+    def __init__(self):
+        pass
 
-    import json
+    def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
 
-    response = model.chat.completions.create(
-        model=model.model_name,
-        messages=[
-            {"role": "system", "content": PLANNER_SYSTEM_RULES},
-            {"role": "user", "content": json.dumps(router_info, indent=2)},
-        ],
-        temperature=0,
-        max_tokens=400,
-    )
+        intent = state.get("intent", "unknown")
+        constraints = state.get("constraints", {}) or {}
+        need_live = state.get("need_live_price", False)
 
-    content = response.choices[0].message.content
+        # ---------------------------
+        # Build FILTERS
+        # ---------------------------
+        filters = {
+            "max_price": constraints.get("max_price") or constraints.get("budget"),
+            "category": normalize_category(constraints.get("category")),
+            "brand": constraints.get("brand"),
+        }
 
-    try:
-        parsed = json.loads(content)
-        return parsed
-    except Exception:
-        # Fail-safe
+        # ---------------------------
+        # Decide SOURCE
+        # ---------------------------
+
+        # If live data required → use web
+        if need_live:
+            mode = "web"
+
+        # If comparing → try private first
+        elif intent == "compare":
+            mode = "rag"
+
+        # Default → use rag
+        else:
+            mode = "rag"
+
+        # ---------------------------
+        # Build Planner Output
+        # ---------------------------
+        planner_output = {
+            "mode": mode,
+            "filters": filters,
+            "intent": intent,
+        }
+
+        # Debug line for logging
+        debug_msg = f"[PLANNER] mode={mode}, filters={filters}, intent={intent}"
+
+        # Return updated state
         return {
-            "use_rag": True,
-            "use_web": router_info.get("need_live_price", False),
-            "rerank": False,
-            "rag_kwargs": {},
-            "web_kwargs": {},
-            "reason": "fallback plan",
+            **state,
+            "planner_output": planner_output,
+            "debug_log": state.get("debug_log", []) + [debug_msg],
         }
 
 
-# ------------------------------------------------------------
-# Planner node
-# ------------------------------------------------------------
-
-def planner_node(state: GraphState, model) -> GraphState:
-    """
-    Takes router output and decides tool usage.
-    """
-
-    router_info = {
-        "intent": state["intent"],
-        "constraints": state["constraints"],
-        "need_live_price": state["need_live_price"],
-        "user_query": state["user_query"],
-    }
-
-    plan_dict = call_llm_planner(model, router_info)
-
-    # Ensure missing fields don't break the system
-    plan: AgentPlan = {
-        "use_rag": bool(plan_dict.get("use_rag", True)),
-        "use_web": bool(plan_dict.get("use_web", False)),
-        "rerank": bool(plan_dict.get("rerank", False)),
-        "rag_kwargs": plan_dict.get("rag_kwargs", {}) or {},
-        "web_kwargs": plan_dict.get("web_kwargs", {}) or {},
-        "reason": plan_dict.get("reason", "no reason provided"),
-    }
-
-    debug_msg = f"[PLANNER] {plan}"
-
-    return {
-        **state,
-        "plan": plan,
-        "debug_log": state.get("debug_log", []) + [debug_msg],
-    }
-
-
-__all__ = ["planner_node", "call_llm_planner", "PLANNER_SYSTEM_RULES"]
+__all__ = ["Planner"]

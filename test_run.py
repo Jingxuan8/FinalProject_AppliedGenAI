@@ -1,64 +1,51 @@
 # test_run.py
-import os
-os.environ["OPENAI_API_KEY"] = REDACTED" | Out-File replace.txt -Encoding utf8"
-from agent_graph import run_pipeline
-from agent_graph.mcp_client import MCPClientWrapper
-from openai import OpenAI
 
-# ---------------------------------------
-# 1. Load OpenAI model
-# ---------------------------------------
-
-# Make sure your OPENAI_API_KEY is set in the environment
-client = OpenAI(api_key=REDACTED" | Out-File replace.txt -Encoding utf8")
-
-# Wrap model name (matches your config & router/planner usage)
-class ModelWrapper:
-    def __init__(self, model_name="gpt-4o-mini"):
-        self.model_name = model_name
-        self.chat = client.chat
-
-model = ModelWrapper("gpt-4o-mini")
+from agent_graph.graph import create_graph
+from agent_graph.state import AgentState
 
 
-# ---------------------------------------
-# 2. Connect to MCP server
-# ---------------------------------------
-mcp = MCPClientWrapper(host="localhost", port=8765)
+def run_query(query: str):
+    print("\n" + "=" * 60)
+    print(f"USER QUERY: {query}")
+    print("=" * 60)
 
-# Test tool listing
-print("\n===== Available MCP Tools =====")
-try:
-    tools = mcp.list_tools()
-    print("Tools:", tools)
-except Exception as e:
-    print("ERROR listing tools:", e)
-# ---------------------------------------
-# 3. Test query
-# ---------------------------------------
+    graph = create_graph()
 
-query = "recommend a fun cooperative board game under $30"
+    # Initial state for graph execution
+    state = {"user_query": query}
+    # Run graph synchronously
+    result = graph.invoke(state)
 
-print("\n============================")
-print("USER QUERY:", query)
-print("============================\n")
+    # Graph may return either dict or AgentState depending on compilation
+    if isinstance(result, dict):
+        answer = result.get("final_answer")
+        planner_output = result.get("planner_output")
+        retrieval_source = result.get("retrieval_source")
+        debug_log = result.get("debug_log", [])
+    else:
+        answer = getattr(result, "final_answer", None)
+        planner_output = getattr(result, "planner_output", None)
+        retrieval_source = getattr(result, "retrieval_source", None)
+        debug_log = getattr(result, "debug_log", [])
 
-# Run full pipeline
-final_state = run_pipeline(query, model, mcp, return_state=True)
+    # Debug trace
+    print("\n--- DEBUG TRACE ---")
+    for line in debug_log:
+        print(line)
 
-# ---------------------------------------
-# 4. Print final answer
-# ---------------------------------------
+    print("\n--- PLANNER OUTPUT ---")
+    print(planner_output)
 
-print("\n===== FINAL ANSWER =====\n")
-print(final_state["final_answer"])
+    print("\n--- RETRIEVAL SOURCE ---")
+    print(retrieval_source)
 
-# ---------------------------------------
-# 5. Print debug log
-# ---------------------------------------
+    print("\n--- FINAL ANSWER ---\n")
+    print(answer)
+    print("\n" + "=" * 60 + "\n")
 
-print("\n===== DEBUG LOG =====\n")
-for line in final_state["debug_log"]:
-    print(line)
 
-print("\nPipeline complete.\n")
+if __name__ == "__main__":
+    # Basic test suite
+    run_query("recommend a cooperative board game under 30 dollars")
+    run_query("what is the current price of a ps5 controller")
+    run_query("compare logitech g502 and razer basilisk mice")

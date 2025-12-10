@@ -1,108 +1,114 @@
 # agent_graph/retriever.py
 
-"""
-Retriever node for LangGraph orchestration.
-
-This node:
-- Executes MCP tool calls (rag.search, web.search) according to the Planner.
-- Stores outputs in the shared GraphState.
-- Handles tool call failures gracefully.
-"""
-
 from __future__ import annotations
-
-from typing import Any, Dict, List
-
-from agent_graph.state import GraphState, AgentPlan
+from typing import Dict, Any
+from .mcp_client import MCPClientWrapper
 
 
-# ------------------------------------------------------------
-# MCP Client Interface (model-agnostic)
-# ------------------------------------------------------------
-
-def call_mcp_tool(mcp_client, tool_name: str, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+class Retriever:
     """
-    Calls an MCP tool via the provided client.
-
-    `mcp_client` must expose:
-        mcp_client.call(tool_name, arguments)
-
-    Expected tool names:
-        - "rag.search"
-        - "web.search"
-
-    Returns list of dict results, or empty list on failure.
+    Retriever bridges Planner output -> MCP tools (rag_search, web_search).
+    This version matches your teammate's original schemas and safely handles
+    both dict and list MCP outputs.
     """
 
-    try:
-        result = mcp_client.call(tool_name, arguments)
-        # FastMCP returns raw JSON-friendly data, so just return it
-        if isinstance(result, list):
-            return result
-        return []
-    except Exception as e:
-        print(f"[ERROR] MCP tool call failed ({tool_name}): {e}")
-        return []
+    def __init__(self):
+        self.mcp = MCPClientWrapper()
 
+    def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        plan = state.get("planner_output", {})
+        mode = plan.get("mode")
 
-# ------------------------------------------------------------
-# Retriever node
-# ------------------------------------------------------------
+        query = state.get("user_query", "")
+        filters = plan.get("filters", {}) or {}
 
-def retriever_node(state: GraphState, mcp_client) -> GraphState:
-    """
-    Executes tool calls selected by the planner.
+        debug = state.get("debug_log", [])
 
-    The planner produces:
-        plan = {
-            use_rag: bool,
-            use_web: bool,
-            rerank: bool,
-            rag_kwargs: {...},
-            web_kwargs: {...},
-            reason: "..."
+        # ============================================================
+        # CASE A — RAG SEARCH
+        # ============================================================
+        if mode == "rag":
+
+            rag_request = {
+                "query": query,
+                "config": {
+                    "num_results": 5,
+                    "rerank": False
+                },
+                "filters": {
+                    "max_price": filters.get("max_price"),
+                    "min_price": None,
+                    "category": filters.get("category"),
+                    "brand": filters.get("brand")
+                }
+            }
+
+            debug.append(f"[RETRIEVER] rag_search args={rag_request}")
+
+            rag_results = self.mcp.call_tool("rag_search", rag_request)
+
+            # ---- Normalize rag_results safely ----
+            if isinstance(rag_results, dict):
+                rag_items = rag_results.get("results", [])
+            elif isinstance(rag_results, list):
+                rag_items = rag_results
+            else:
+                rag_items = []
+
+            debug.append(f"[RETRIEIVER] rag returned {len(rag_items)} items")
+
+            return {
+                **state,
+                "retrieval_source": "rag",
+                "rag_results": rag_items,
+                "web_results": [],
+                "debug_log": debug,
+            }
+
+        # ============================================================
+        # CASE B — WEB SEARCH
+        # ============================================================
+        elif mode == "web":
+
+            web_request = {
+                "query": query,
+                "num_results": 5
+            }
+
+            debug.append(f"[RETRIEVER] web_search args={web_request}")
+
+            web_results = self.mcp.call_tool("web_search", web_request)
+
+            # ---- Normalize web_results safely ----
+            if isinstance(web_results, dict):
+                web_items = web_results.get("results", [])
+            elif isinstance(web_results, list):
+                web_items = web_results
+            else:
+                web_items = []
+
+            debug.append(f"[RETRIEVER] web returned {len(web_items)} items")
+
+            return {
+                **state,
+                "retrieval_source": "web",
+                "rag_results": [],
+                "web_results": web_items,
+                "debug_log": debug,
+            }
+
+        # ============================================================
+        # FALLBACK — NO PLAN
+        # ============================================================
+        debug.append("[RETRIEVER] No valid retrieval mode")
+
+        return {
+            **state,
+            "retrieval_source": None,
+            "rag_results": [],
+            "web_results": [],
+            "debug_log": debug,
         }
 
-    This node uses the plan to call the appropriate tools.
-    """
 
-    plan: AgentPlan = state.get("plan", {})
-
-    rag_results: List[Dict[str, Any]] = []
-    web_results: List[Dict[str, Any]] = []
-
-    # ------------------------------------------------------------
-    # 1. RAG SEARCH (default)
-    # ------------------------------------------------------------
-    if plan.get("use_rag", False):
-        rag_args = plan.get("rag_kwargs", {})
-        rag_args["query"] = state["user_query"]  # ensure query present
-        rag_args.setdefault("num_results", 5)
-        rag_args.setdefault("rerank", plan.get("rerank", False))
-
-        rag_results = call_mcp_tool(mcp_client, "rag.search", rag_args)
-
-    # ------------------------------------------------------------
-    # 2. WEB SEARCH (real-time price/availability)
-    # ------------------------------------------------------------
-    if plan.get("use_web", False):
-        web_args = plan.get("web_kwargs", {})
-        web_args["query"] = state["user_query"]
-        web_args.setdefault("num_results", 5)
-
-        web_results = call_mcp_tool(mcp_client, "web.search", web_args)
-
-    debug_msg = (
-        f"[RETRIEVER] rag={len(rag_results)} results, "
-        f"web={len(web_results)} results"
-    )
-
-    return {
-        **state,
-        "rag_results": rag_results,
-        "web_results": web_results,
-        "debug_log": state.get("debug_log", []) + [debug_msg],
-    }
-
-
-__all__ = ["retriever_node", "call_mcp_tool"]
+__all__ = ["Retriever"]

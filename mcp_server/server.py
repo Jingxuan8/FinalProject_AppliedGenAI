@@ -1,9 +1,15 @@
 """
 MCP Server Implementation using FastMCP
-Exposes web.search and rag.search tools
+Supports:
+- web.search
+- rag.search (dummy index if dummy_products1.json exists)
 """
 
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from pathlib import Path
+import json
+import logging
+
 from fastmcp import FastMCP
 
 from .tools.web_search import WebSearchTool
@@ -12,211 +18,166 @@ from .utils.logger import setup_logging
 
 logger = setup_logging()
 
-# Initialize FastMCP server
+# ============================================================
+# Set up FastMCP server
+# ============================================================
+
 mcp = FastMCP(
     name="ecommerce-mcp-server",
-    instructions="""
-    E-commerce Product Search MCP Server.
-    
-    This server provides two tools for product search:
-    
-    1. web_search: Search the web for real-time product information, prices, and availability.
-    Use this when the user asks about current prices, stock availability, or latest deals.
-    
-    2. rag_search: Search the private Amazon Product Dataset 2020 catalog.
-    Use this for detailed product information, ratings, reviews, and grounded recommendations.
-    
-    For best results:
-    - Use rag_search first for product details, ratings, and features
-    - Use web_search when user needs real-time/current information
-    - Combine both for price comparisons between catalog and live data
-    """
+    instructions="E-commerce product search server with optional dummy RAG index."
 )
 
-# Initialize tool instances
-_web_search_tool = WebSearchTool()
-_rag_search_tool = RAGSearchTool()
+# ============================================================
+# STEP 1 — Load dummy RAG dataset FIRST
+# ============================================================
+
+DUMMY_PATH = Path(__file__).resolve().parents[1] / "dummy_products1.json"
+
+_dummy_index: List[Dict[str, Any]] = []
+
+
+def load_dummy_index():
+    global _dummy_index
+
+    if not DUMMY_PATH.exists():
+        logger.info("dummy_products1.json not found — using real vector store for RAG.")
+        _dummy_index = []
+        return
+
+    try:
+        with DUMMY_PATH.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                _dummy_index = data
+                logger.info(f"Loaded dummy RAG dataset with {len(_dummy_index)} items.")
+            else:
+                logger.warning("dummy_products1.json is not a list — ignoring.")
+                _dummy_index = []
+    except Exception as exc:
+        logger.error(f"Failed to load dummy RAG file: {exc}")
+        _dummy_index = []
+
+
+# Load dummy data now
+load_dummy_index()
 
 
 # ============================================================
-# Core Tool Functions (callable directly)
+# STEP 2 — Initialize tools
+# ============================================================
+
+_web_tool = WebSearchTool()
+
+if _dummy_index:
+    logger.info("Dummy index active — skipping vector store initialization.")
+    _rag_tool = None
+else:
+    logger.info("No dummy index — initializing real vector store RAGSearchTool.")
+    _rag_tool = RAGSearchTool()
+
+
+# ============================================================
+# STEP 3 — Dummy RAG implementation
+# ============================================================
+
+def dummy_rag_search(
+    query: str,
+    category: Optional[str] = None,
+    max_price: Optional[float] = None,
+    num_results: int = 5
+) -> List[Dict[str, Any]]:
+
+    q = query.lower()
+    results = []
+
+    for item in _dummy_index:
+        text = f"{item.get('title','')} {item.get('description','')}".lower()
+
+        # simple token scoring
+        score = sum(1 for token in q.split() if token in text)
+        if score == 0:
+            continue
+
+        price = item.get("price")
+        if max_price is not None and price is not None and price > max_price:
+            continue
+
+        if category and category.lower() not in item.get("category", "").lower():
+            continue
+
+        results.append((score, item))
+
+    results.sort(key=lambda x: x[0], reverse=True)
+    return [item for _, item in results[:num_results]]
+
+
+# ============================================================
+# STEP 4 — MCP Tool functions (NO **kwargs allowed)
 # ============================================================
 
 def web_search(
     query: str,
     max_price: Optional[float] = None,
-    min_price: Optional[float] = None,
-    brand: Optional[str] = None,
-    availability: Optional[str] = None,
     num_results: int = 5
-) -> list[dict]:
-    """
-    Search the web for product information, prices, and availability.
-    
-    Use this for real-time pricing, current availability checks, or when
-    the user asks about 'current', 'now', or 'latest' information.
-    
-    Args:
-        query: Search query for finding products (e.g., 'board game cooperative family')
-        max_price: Maximum price in USD
-        min_price: Minimum price in USD
-        brand: Filter by brand name
-        availability: Filter by availability ('in_stock' or 'any')
-        num_results: Number of results to return (1-10, default: 5)
-    
-    Returns:
-        List of search results with title, url, snippet, price, availability, source
-    """
-    filters = {}
-    if max_price is not None:
-        filters["max_price"] = max_price
-    if min_price is not None:
-        filters["min_price"] = min_price
-    if brand:
-        filters["brand"] = brand
-    if availability:
-        filters["availability"] = availability
-    
-    results = _web_search_tool.search(
+):
+    return _web_tool.search(
         query=query,
-        filters=filters if filters else None,
-        num_results=min(max(num_results, 1), 10)
+        filters=None,
+        num_results=num_results
     )
-    
-    return results
 
 
 def rag_search(
     query: str,
-    budget: Optional[float] = None,
     category: Optional[str] = None,
-    brand: Optional[str] = None,
-    min_rating: Optional[float] = None,
     max_price: Optional[float] = None,
-    min_price: Optional[float] = None,
-    num_results: int = 5,
-    rerank: bool = False
-) -> list[dict]:
-    """
-    Search the private Amazon Product Dataset 2020 catalog for product recommendations.
-    
-    Use this for detailed product information, ratings, reviews, and grounded recommendations.
-    Each result includes a doc_id for citation purposes.
-    
-    Args:
-        query: Natural language query describing the product you're looking for
-        budget: Maximum budget in USD (shorthand for max_price)
-        category: Product category (e.g., 'Board Games', 'Card Games')
-        brand: Filter by brand name
-        min_rating: Minimum star rating (1-5)
-        max_price: Maximum price in USD
-        min_price: Minimum price in USD
-        num_results: Number of results to return (1-20, default: 5)
-        rerank: Whether to apply LLM-based reranking for better relevance
-    
-    Returns:
-        List of products with sku, doc_id (for citations), title, price, rating, brand, 
-        category, features, ingredients, relevance_score
-    """
-    filters = {}
-    if category:
-        filters["category"] = category
-    if brand:
-        filters["brand"] = brand
-    if min_rating is not None:
-        filters["min_rating"] = min_rating
-    if max_price is not None:
-        filters["max_price"] = max_price
-    if min_price is not None:
-        filters["min_price"] = min_price
-    
-    results = _rag_search_tool.search(
+    num_results: int = 5
+):
+    if _dummy_index:
+        logger.debug("Using dummy RAG search")
+        return dummy_rag_search(
+            query=query,
+            category=category,
+            max_price=max_price,
+            num_results=num_results,
+        )
+
+    logger.debug("Using REAL vector store RAGSearchTool")
+    return _rag_tool.search(
         query=query,
-        budget=budget,
-        filters=filters if filters else None,
-        num_results=min(max(num_results, 1), 20),
-        rerank=rerank
+        filters={"category": category, "max_price": max_price},
+        num_results=num_results,
+        rerank=False,
     )
-    
-    return results
-
-
-def get_cache_stats() -> dict:
-    """
-    Get statistics about the search caches.
-    
-    Returns:
-        Cache statistics including hit rates and entry counts
-    """
-    from .utils.cache import web_search_cache, rag_search_cache
-    
-    return {
-        "web_search_cache": web_search_cache.get_stats(),
-        "rag_search_cache": rag_search_cache.get_stats()
-    }
-
-
-def get_tool_logs(limit: int = 10) -> list[dict]:
-    """
-    Get recent tool call logs for auditing.
-    
-    Args:
-        limit: Maximum number of log entries to return (default: 10)
-    
-    Returns:
-        List of recent tool call log entries
-    """
-    from .utils.logger import tool_logger
-    
-    return tool_logger.get_recent_logs(limit=limit)
 
 
 # ============================================================
-# Register tools with FastMCP
+# STEP 5 — Register tools
 # ============================================================
 
-# Register the functions as MCP tools
 mcp.tool()(web_search)
 mcp.tool()(rag_search)
-mcp.tool()(get_cache_stats)
-mcp.tool()(get_tool_logs)
 
 
 # ============================================================
-# Server entry point
+# STEP 6 — Entry point
 # ============================================================
 
 def main():
-    """Main entry point for the MCP server."""
     import argparse
-    
-    parser = argparse.ArgumentParser(description="MCP Server for E-commerce Product Search")
-    parser.add_argument(
-        "--transport",
-        choices=["stdio", "sse"],
-        default="stdio",
-        help="Transport mode (default: stdio)"
-    )
-    parser.add_argument(
-        "--host",
-        default="localhost",
-        help="SSE server host (default: localhost)"
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8765,
-        help="SSE server port (default: 8765)"
-    )
-    
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--transport", choices=["stdio", "http", "sse"], default="stdio")
+    parser.add_argument("--host", default="localhost")
+    parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
-    
-    logger.info(f"Starting MCP server with {args.transport} transport")
-    
+
+    logger.info("Starting MCP server with transport %s", args.transport)
+
     if args.transport == "stdio":
         mcp.run()
     else:
-        mcp.run(transport="sse", host=args.host, port=args.port)
+        mcp.run(transport=args.transport, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
