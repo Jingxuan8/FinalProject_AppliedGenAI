@@ -9,7 +9,7 @@ from openai import OpenAI
 # ---------------------------------------
 
 # Make sure your OPENAI_API_KEY is set in the environment
-client = OpenAI(api_key=REDACTED" | Out-File replace.txt -Encoding utf8")
+client = OpenAI(api_key="YOUR API KEY")
 
 # Wrap model name (matches your config & router/planner usage)
 class ModelWrapper:
