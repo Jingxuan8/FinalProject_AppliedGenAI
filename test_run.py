@@ -1,6 +1,6 @@
 # test_run.py
 import os
-os.environ["OPENAI_API_KEY"] = REDACTED" | Out-File replace.txt -Encoding utf8"
+os.environ["OPENAI_API_KEY"] = ""
 from agent_graph import run_pipeline
 from agent_graph.mcp_client import MCPClientWrapper
 from openai import OpenAI
