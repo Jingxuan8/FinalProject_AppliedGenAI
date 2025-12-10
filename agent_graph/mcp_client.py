@@ -2,7 +2,13 @@ import asyncio
 import json
 from google.adk.tools.mcp_tool import McpToolset, StreamableHTTPConnectionParams
 
+import logging
 
+logging.getLogger("mcp").setLevel(logging.CRITICAL)
+logging.getLogger("mcp.client").setLevel(logging.CRITICAL)
+logging.getLogger("mcp.client.streamable_http").setLevel(logging.CRITICAL)
+logging.getLogger("anyio").setLevel(logging.CRITICAL)
+logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 class MCPClientWrapper:
     """
     Wrapper around ADK's MCP Toolset with:
@@ -28,9 +34,9 @@ class MCPClientWrapper:
         try:
             return asyncio.run(coro)
 
-        # Suppress anyio cancellation noise
         except RuntimeError as e:
-            if "cancel scope" in str(e) or "different task" in str(e):
+            # Suppress noisy shutdown errors from FastMCP streaming
+            if "cancel scope" in str(e) or "different task" in str(e) or "Attempted to exit cancel scope" in str(e):
                 return None
             return None
 

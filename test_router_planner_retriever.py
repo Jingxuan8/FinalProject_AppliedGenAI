@@ -69,7 +69,7 @@ def run_test(query):
 test_cases = [
     "recommend a cooperative board game under 30 dollars",
     "what is the current price of a ps5 controller",
-    "compare logitech g502 and razer basilisk mice",
+    "recommend a popular card game for 4 players",
 ]
 
 for q in test_cases:

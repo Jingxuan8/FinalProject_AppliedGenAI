@@ -29,18 +29,12 @@ class Retriever:
         # ============================================================
         if mode == "rag":
 
+            # Match FastMCP rag_search signature in mcp_server/server.py
             rag_request = {
                 "query": query,
-                "config": {
-                    "num_results": 5,
-                    "rerank": False
-                },
-                "filters": {
-                    "max_price": filters.get("max_price"),
-                    "min_price": None,
-                    "category": filters.get("category"),
-                    "brand": filters.get("brand")
-                }
+                "category": filters.get("category"),
+                "max_price": filters.get("max_price"),
+                "num_results": 5,
             }
 
             debug.append(f"[RETRIEVER] rag_search args={rag_request}")
@@ -55,7 +49,7 @@ class Retriever:
             else:
                 rag_items = []
 
-            debug.append(f"[RETRIEIVER] rag returned {len(rag_items)} items")
+            debug.append(f"[RETRIEVER] rag returned {len(rag_items)} items")
 
             return {
                 **state,
