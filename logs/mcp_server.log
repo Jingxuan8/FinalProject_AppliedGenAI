@@ -277,3 +277,9 @@
 2025-12-10 10:48:09,484 - mcp_server - INFO - _search_serper:242 - Serper API call: what is the current price of a ps5 controller...
 2025-12-10 10:48:10,467 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
 2025-12-10 10:48:10,471 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 985.25ms | Cache: MISS
+2025-12-10 11:05:22,479 - mcp_server - INFO - load_dummy_index:43 - dummy_products1.json not found — using real vector store for RAG.
+2025-12-10 11:05:22,744 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 11:05:22,745 - mcp_server - INFO - <module>:75 - No dummy index — initializing real vector store RAGSearchTool.
+2025-12-10 11:05:25,249 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 11:05:25,457 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 11:05:25,465 - mcp_server - INFO - main:175 - Starting MCP server with transport http
