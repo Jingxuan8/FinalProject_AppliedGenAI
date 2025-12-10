@@ -1,0 +1,85 @@
+2025-12-09 22:22:36,836 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:22:42,066 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:22:42,066 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:22:42,075 - mcp_server - INFO - main:214 - Starting MCP server with stdio transport
+2025-12-09 22:29:39,030 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:29:41,092 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:29:41,093 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:29:41,098 - mcp_server - INFO - main:214 - Starting MCP server with stdio transport
+2025-12-09 22:48:20,811 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:48:23,329 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:48:23,329 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:48:23,343 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 22:48:45,586 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:48:47,484 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:48:47,484 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:48:47,489 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 22:50:39,433 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:50:42,267 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:50:42,268 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:50:42,285 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 22:54:20,998 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:54:22,944 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:54:22,945 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:54:22,950 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 22:57:44,779 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 22:57:46,753 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 22:57:46,753 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 22:57:46,758 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 23:00:13,460 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:00:16,441 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:00:16,441 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:00:16,461 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 23:14:42,703 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:14:44,732 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:14:44,733 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:14:44,738 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 23:23:06,634 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:23:09,366 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:23:09,367 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:27:03,159 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:27:05,128 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:27:05,128 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:42:30,023 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:42:32,472 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:42:32,472 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:44:32,542 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:44:34,491 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:44:34,491 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:44:34,496 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 23:50:47,574 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:50:49,958 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:50:49,958 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:50:49,972 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-09 23:57:12,595 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-09 23:57:14,898 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-09 23:57:14,898 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-09 23:57:14,903 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 00:00:51,422 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:00:53,418 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:00:53,418 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:00:53,423 - mcp_server - INFO - main:214 - Starting MCP server with stdio transport
+2025-12-10 00:02:14,884 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:02:16,833 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:02:16,833 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:02:16,842 - mcp_server - INFO - main:214 - Starting MCP server with stdio transport
+2025-12-10 00:06:19,882 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:06:22,010 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:06:22,010 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:06:22,015 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 00:07:22,761 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:07:24,685 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:07:24,687 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:07:24,695 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 00:08:11,181 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:08:13,128 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:08:13,129 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:08:13,134 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 00:08:49,541 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:08:51,501 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:08:51,502 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:08:51,509 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 00:09:35,092 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 00:09:36,948 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 00:09:36,949 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 00:09:36,954 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
