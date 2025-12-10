@@ -12,23 +12,30 @@ pydantic>=2.0.0
 aiohttp>=3.9.0
 
 # ===================
+# Agent Graph (LangGraph)
+# ===================
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+google-adk>=0.1.0
+
+# ===================
 # Vector Store & RAG
 # ===================
 chromadb>=0.4.0
 sentence-transformers>=2.2.0
 
 # ===================
-# LLM Clients (model-agnostic)
+# LLM Clients
 # ===================
 openai>=1.0.0
-# anthropic>=0.18.0        # Uncomment for Anthropic/Claude
-# google-generativeai>=0.3.0  # Uncomment for Google Gemini
+google-generativeai>=0.3.0
 
 # ===================
 # Data Processing
 # ===================
 pandas>=2.0.0
-numpy<2.0.0  # Important: numpy 2.x has compatibility issues with torch
+numpy<2.0.0
 pyarrow>=14.0.0
 
 # ===================
@@ -42,13 +49,14 @@ torch>=2.0.0
 python-dotenv>=1.0.0
 
 # ===================
-# Testing (optional)
+# Telemetry (for Google ADK)
+# ===================
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp-proto-http>=1.20.0
+
+# ===================
+# Testing
 # ===================
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
-
-opentelemetry-api==1.37.0
-opentelemetry-sdk==1.37.0
-opentelemetry-exporter-otlp-proto-http==1.37.0
-opentelemetry-exporter-otlp-proto-common==1.37.0
-opentelemetry-proto==1.37.0

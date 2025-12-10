@@ -1,0 +1,31 @@
+2025-12-10 17:12:50,650 - mcp_server - WARNING - <module>:55 - WebSearchTool not available: Web Search API key is required!
+Provider: serper
+Please set one of these environment variables:
+  - SERPER_API_KEY (get free key at https://serper.dev)
+  - BRAVE_API_KEY (get key at https://brave.com/search/api)
+  - WEB_SEARCH_API_KEY
+
+Example:
+  export SERPER_API_KEY='your_api_key_here'
+2025-12-10 17:12:54,061 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 17:12:54,061 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 17:12:54,062 - mcp_server - INFO - <module>:63 - RAGSearchTool initialized with 632 documents
+2025-12-10 17:12:54,074 - mcp_server - INFO - main:197 - Starting MCP server with transport: http
+2025-12-10 17:12:54,088 - mcp_server - WARNING - main:202 -   - web_search: DISABLED (no API key)
+2025-12-10 17:12:54,090 - mcp_server - INFO - main:205 -   - rag_search: enabled (632 docs)
+2025-12-10 17:16:33,137 - mcp_server - WARNING - <module>:55 - WebSearchTool not available: Web Search API key is required!
+Provider: serper
+Please set one of these environment variables:
+  - SERPER_API_KEY (get free key at https://serper.dev)
+  - BRAVE_API_KEY (get key at https://brave.com/search/api)
+  - WEB_SEARCH_API_KEY
+
+Example:
+  export SERPER_API_KEY='your_api_key_here'
+2025-12-10 17:16:45,146 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 17:16:45,146 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
+2025-12-10 17:16:45,147 - mcp_server - INFO - <module>:63 - RAGSearchTool initialized with 632 documents
+2025-12-10 17:16:45,169 - mcp_server - INFO - main:201 - Starting MCP server with transport: http
+2025-12-10 17:16:45,169 - mcp_server - WARNING - main:206 -   - web_search: DISABLED (no API key)
+2025-12-10 17:16:45,171 - mcp_server - INFO - main:209 -   - rag_search: enabled (632 docs)
+2025-12-10 17:17:46,399 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 343.88ms | Cache: MISS

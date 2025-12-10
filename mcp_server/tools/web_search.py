@@ -211,7 +211,7 @@ class WebSearchTool:
         parts = [query]
         
         if filters.get("max_price"):
-            parts.append(f"under \${filters['max_price']}")
+            parts.append(f"under ${filters['max_price']}")
         
         if filters.get("brand"):
             parts.append(f"{filters['brand']} brand")
