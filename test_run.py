@@ -1,15 +1,16 @@
 # test_run.py
 import os
-os.environ["OPENAI_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = REDACTED" | Out-File replace.txt -Encoding utf8"
 from agent_graph import run_pipeline
 from agent_graph.mcp_client import MCPClientWrapper
 from openai import OpenAI
+
 # ---------------------------------------
 # 1. Load OpenAI model
 # ---------------------------------------
 
 # Make sure your OPENAI_API_KEY is set in the environment
-client = OpenAI(api_key="YOUR API KEY")
+client = OpenAI(api_key=REDACTED" | Out-File replace.txt -Encoding utf8")
 
 # Wrap model name (matches your config & router/planner usage)
 class ModelWrapper:
@@ -23,11 +24,15 @@ model = ModelWrapper("gpt-4o-mini")
 # ---------------------------------------
 # 2. Connect to MCP server
 # ---------------------------------------
-
-# Connect to server running in SSE mode
 mcp = MCPClientWrapper(host="localhost", port=8765)
 
-
+# Test tool listing
+print("\n===== Available MCP Tools =====")
+try:
+    tools = mcp.list_tools()
+    print("Tools:", tools)
+except Exception as e:
+    print("ERROR listing tools:", e)
 # ---------------------------------------
 # 3. Test query
 # ---------------------------------------

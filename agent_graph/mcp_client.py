@@ -1,46 +1,38 @@
-# agent_graph/mcp_client.py
-
-import json
 import asyncio
-from typing import Any, Dict, List
-from fastmcp.client import Client
-
+from google.adk.tools.mcp_tool import McpToolset, StreamableHTTPConnectionParams
 
 class MCPClientWrapper:
-    """
-    Synchronous wrapper around the FastMCP async Client.
-    Compatible with FastMCP 2.13.3.
-    """
-
     def __init__(self, host="localhost", port=8765):
-        # Connect to FastMCP server via HTTP/SSE endpoint
-        self.url = f"http://{host}:{port}"
-        self.client = Client(self.url)
+        url = "http://localhost:8765/mcp"
+        self.toolset = McpToolset(
+            connection_params=StreamableHTTPConnectionParams(url=url)
+        )
 
-    def _run(self, coro):
-        """Run async FastMCP operations synchronously."""
-        return asyncio.get_event_loop().run_until_complete(coro)
+    def list_tools(self):
+        return asyncio.run(self._list_tools())
 
-    def call(self, tool_name: str, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Call an MCP tool synchronously.
-        Returns a Python list of dict results.
-        """
-        result = self._run(self.client.call_tool(tool_name, arguments))
+    async def _list_tools(self):
+        tools = await self.toolset.get_tools()
+        return [t.name for t in tools]
 
-        if not result.content:
+    def call(self, tool_name, arguments):
+        return asyncio.run(self._call(tool_name, arguments))
+
+    async def _call(self, tool_name, arguments):
+        tools = await self.toolset.get_tools()
+
+        # Find correct tool
+        tool = None
+        for t in tools:
+            if t.name == tool_name:
+                tool = t
+                break
+
+        if tool is None:
             return []
 
-        part = result.content[0]
+        # Run tool asynchronously
+        result = await tool.run_async(args=arguments, tool_context=None)
 
-        if part.type == "text":
-            try:
-                return json.loads(part.text)
-            except Exception:
-                return []
-
-        return result.content
-
-    def list_tools(self) -> List[str]:
-        result = self._run(self.client.list_tools())
-        return [t.name for t in result]
+        # Result is already JSON-compatible
+        return result

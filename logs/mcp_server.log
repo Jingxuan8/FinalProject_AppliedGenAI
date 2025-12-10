@@ -83,3 +83,35 @@
 2025-12-10 00:09:36,948 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
 2025-12-10 00:09:36,949 - mcp_server - INFO - _init_openai:88 - No LLM_API_KEY set - reranking will fail if requested
 2025-12-10 00:09:36,954 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:46:27,188 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:46:29,472 - mcp_server - ERROR - _init_rag:71 - Failed to initialize GamesRAG: Collection [games_accessories] does not exist
+2025-12-10 05:46:29,671 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:46:29,676 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:48:57,419 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:48:59,985 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 05:49:00,562 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:49:00,583 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:52:10,429 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:52:12,388 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 05:52:12,576 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:52:12,596 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:53:38,024 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:53:40,019 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 05:53:40,217 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:53:40,223 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:54:11,354 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:54:13,367 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 05:54:13,561 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:54:13,569 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:55:01,077 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:55:03,083 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 05:55:03,280 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:55:03,288 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 05:59:07,422 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 05:59:09,425 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 05:59:09,625 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 05:59:09,632 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
+2025-12-10 06:15:39,367 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 06:15:41,547 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 06:15:41,733 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 06:15:41,745 - mcp_server - INFO - main:214 - Starting MCP server with sse transport
