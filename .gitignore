@@ -12,3 +12,13 @@ data/vector_store/
 .DS_Store
 .idea/
 .vscode/
+
+/data/whisper
+
+/cache/rag_search_cache.json
+/cache/web_search_cache.json
+
+/logs/mcp_server.log
+/logs/tool_calls.jsonl
+
+.env

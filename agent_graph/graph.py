@@ -11,10 +11,10 @@ from agent_graph.answerer import Answerer    # <-- Critic removed
 def create_graph():
     graph = StateGraph(dict)
 
-    router = Router("gpt-4o-mini")
+    router = Router()
     planner = Planner()
     retriever = Retriever()
-    answerer = Answerer("gpt-4o-mini")   # <-- Hybrid Answerer/Critic
+    answerer = Answerer()   # <-- Hybrid Answerer/Critic
 
     # -----------------------------
     # 1. Add nodes
