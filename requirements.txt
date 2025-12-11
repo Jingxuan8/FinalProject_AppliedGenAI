@@ -74,3 +74,4 @@ pydub
 # App UI
 # ===================
 streamlit
+pandas

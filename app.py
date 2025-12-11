@@ -5,6 +5,7 @@ import tempfile
 import whisper
 import torch
 import numpy as np
+import pandas as pd
 import streamlit as st
 from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
 import soundfile as sf
@@ -16,11 +17,44 @@ from audiorecorder import audiorecorder
 
 from agent_graph.graph import create_graph
 
+
+from mcp_server.utils.logger import LOG_FILE
+if "log_start_pos" not in st.session_state:
+    try:
+        st.session_state["log_start_pos"] = os.path.getsize(LOG_FILE)
+    except:
+        st.session_state["log_start_pos"] = 0
+
+def read_new_logs():
+    log_path = LOG_FILE
+
+    if not os.path.exists(log_path):
+        return ["Log file does not exist."]
+
+    logs = []
+    start = st.session_state.get("log_start_pos", 0)
+
+    with open(log_path, "r", encoding="utf-8") as f:
+        f.seek(start)  # jump to where this session started
+        for line in f:
+            logs.append(line.rstrip())
+
+    return logs
+
+
 # ============================================================ #
 
 st.set_page_config(page_title="Agentic Voice-to-Voice AI Assistant for Product Discovery",
                    page_icon="https://img.icons8.com/ios_filled/1200/ai-chatting.jpg")
-
+st.markdown("""
+    <style>
+    .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 80% !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def get_openai_client() -> OpenAI:
@@ -31,24 +65,7 @@ def get_openai_client() -> OpenAI:
 def get_rag_graph():
     return create_graph()
 
-### not needed anymore 
-#@st.cache_resource
-#def load_tts_models():
-#    processor = SpeechT5Processor.from_pretrained("microsoft/speecht5_tts")
-#    model = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
-#    vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan")
-#
-#    # Example speaker embedding from a public dataset, can change if desired, make sure size is (1,512)
-#    speaker_embedding = torch.load("data/speaker_embedding_512_new.pt")
-#
-#    return processor, model, vocoder, speaker_embedding
 
-
-# below use whisper model (local downloaded) as transcriber
-# can changed to openai transcribing
-# or can fetch whisper model through api
-
-# Cache the Whisper model so it loads only once
 @st.cache_resource
 def load_whisper_model():
     return whisper.load_model("data/whisper/small.pt")
@@ -75,20 +92,56 @@ def transcribe_audio_to_text(file_bytes: bytes, filename: str) -> str:
     result = model.transcribe(audio_path)
     return result.get("text", "")
 
+def safe_price(value):
+    try:
+        return f"{float(value):.2f}"
+    except:
+        return "N/A"
 
-def run_rag_pipeline(user_query: str) -> str:
+def run_rag_pipeline(user_query: str):
     # get LangGraph
     graph = get_rag_graph()
 
     final_state = graph.invoke({"user_query": user_query})
 
+    # pick top 3 and extract
+    max_items = 3
+    web_len = min(len(final_state.get("web_results")), max_items)
+    rag_len = min(len(final_state.get("rag_results")), max_items - web_len)
 
-    ## find final_state structure here ###############
-    print(final_state)
+    product_names = []
+    product_prices = []
+    product_urls = []
+    product_docs = []
+    if web_len != 0:
+        for i in range(web_len):
+            product_names.append(final_state.get("web_results")[i]["title"])
+            product_prices.append(safe_price(final_state.get('web_results')[i]['price']))
+            product_urls.append(final_state.get("web_results")[i]["url"])
+            product_docs.append("")
 
+    for i in range(rag_len):
+        product_names.append(final_state.get("rag_results")[i+web_len]["title"])
+        product_prices.append(safe_price(final_state.get('rag_results')[i]['price']))
+        product_urls.append(final_state.get("rag_results")[i+web_len]["product_url"])
+        product_docs.append(final_state.get("rag_results")[i+web_len]["doc_id"])
 
-    answer = final_state.get("final_answer") or ""
-    return answer
+    comparison_data = {
+        "Name": product_names,
+        "Price ($)": product_prices,
+        "Reference Link": product_urls,
+        "Doc ID": product_docs,
+    }
+
+    df = pd.DataFrame(comparison_data)
+    df.index = df.index + 1
+
+    print(final_state.get("web_results"))
+
+    answer = final_state.get("speech_answer") or ""
+    paper_answer = final_state.get("paper_answer") or ""
+    debug_log = final_state.get("debug_log", [])
+    return answer, df, paper_answer, debug_log
 
 
 # fragmented tts
@@ -128,7 +181,7 @@ def synthesize_answer_to_wav(answer_text: str) -> bytes:
             model="gpt-4o-mini-tts",
             voice="nova", # avalible: 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse', 'ballad', 'ash', 'sage', 'marin', and 'cedar'
             input=chunk,
-            speed=1.5,  # (optionally speed up)
+            speed=1.7,  # (optionally speed up)
             response_format="wav"
         )
 
@@ -158,6 +211,18 @@ def synthesize_answer_to_wav(answer_text: str) -> bytes:
 
 
 def main():
+    # style
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     st.title("Agentic Voice-to-Voice AI Assistant for Product Discovery")
     st.markdown("### 🎙️ Ask your question")
 
@@ -175,7 +240,6 @@ def main():
         wav_io.seek(0)
         recorded_audio_bytes = wav_io.getvalue()
 
-    #if st.button("Transcribe & Ask RAG Agent"): # change to no button?
 
     if recorded_audio_bytes is None:
         st.info("Go ahead and record your question!")
@@ -196,15 +260,13 @@ def main():
 
     with st.spinner("Querying AI assistant..."):
         try:
-            answer = run_rag_pipeline(user_text) # currently not working, debug, use replacment below to test out rest
-            #answer = '''In e-commerce, customers often ask for product recommendations by speaking naturally (e.g., “I need an eco-friendly stainless-steel cleaner under $15”). Traditional chatbots struggle to interpret intent, search private catalogs, check live availability, and answer clearly; especially hands-free.
-            #This project delivers a voice-to-voice, multi-agent assistant that understands spoken requests, plans a solution path, retrieves grounded evidence from a private catalog (Amazon Product Dataset 2020), optionally compares with live web results via MCP tools, and replies via TTS with citations and basic safety checks. Orchestration must be implemented with LangGraph.'''
+            answer, df, paper_answer, agent_log = run_rag_pipeline(user_text)
         except Exception as e:
             st.error(f"Pipeline failed: {e}")
             return
 
     st.subheader("Answer in text:")
-    st.write(answer)
+    st.write(paper_answer) # can change to answer if you want just voice transcription
 
     with st.spinner("Synthesizing spoken answer into voice response..."):
         try:
@@ -226,52 +288,76 @@ def main():
     else:
         st.warning("No audio was generated from the answer text.")
 
+    #log
+    new_logs = read_new_logs()
+    try:
+        st.session_state["log_start_pos"] = os.path.getsize(LOG_FILE)
+    except:
+        st.session_state["log_start_pos"] = 0
+
 
     # Comparison Table #
     st.markdown("## Product Comparison Table")
 
-    # Example placeholder data (replace with real RAG outputs)
-    product_name_1 = "Product A"
-    product_price_1 = "$29.99"
-    product_desc_1 = "A high-quality item with excellent durability."
-
-    product_name_2 = "Product B"
-    product_price_2 = "$19.99"
-    product_desc_2 = "Affordable choice with solid performance."
-
-    product_name_3 = "Product C"
-    product_price_3 = "$39.99"
-    product_desc_3 = "Premium build with advanced features."
-
     # Build table
-    comparison_data = {
-        "Name": [product_name_1, product_name_2, product_name_3],
-        "Price": [product_price_1, product_price_2, product_price_3],
-        "Description": [product_desc_1, product_desc_2, product_desc_3]
+    st.markdown("""
+    <style>
+    /* Make table full width */
+    table {
+        width: 100% !important;
     }
-    st.table(comparison_data)
+
+    /* Header styling */
+    thead th {
+        background-color: #f0f0f0 !important;
+        color: black !important;
+        font-weight: 800 !important;   /* header bold */
+        font-size: 16px !important;
+        border: 2px solid black !important;
+        padding: 10px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Rows */
+    tbody td {
+        border: 2px solid black !important;
+        padding: 12px !important;
+        font-size: 15px !important;
+    }
+
+    /* Index column (left-most) */
+    tbody th {
+        font-weight: 800 !important;   /* bold index */
+        color: black !important;        /* black text */
+        border: 2px solid black !important;
+        padding: 10px !important;
+        background-color: #fafafa !important;  /* subtle background */
+        font-size: 15px !important;
+    }
+                    
+    /* Alternating row colors */
+    tbody tr:nth-child(odd) {
+        background-color: #fafafa !important;
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #f2f2f2 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Display table
+    st.table(df)
 
 
-    # Reference Links #
-    st.markdown("### 🔗 Reference Links")
-    st.markdown(
-        """
-        - https://example.com/productA  
-        - https://example.com/productB  
-        - https://example.com/productC  
-        """
-    )
-
-
-    st.markdown("# Logs")
-
-    # Placeholder logs — replace with actual log
-    log_messages = [
-        "User asked: 'find me a budget laptop'",
-        "Agent retrieved 12 candidate products",
-        "Filtered to 3 best matches",
-        "Generated final response"
-    ]
+    st.markdown("### Logs")
+    agent_log = agent_log or []
+    new_logs = new_logs or []
+    combined_logs = []
+    for entry in agent_log:
+        combined_logs.append(str(entry))
+    for entry in new_logs:
+        combined_logs.append(str(entry))
 
     # scrollable log box
     st.markdown(
@@ -286,7 +372,7 @@ def main():
             font-size:14px;
             line-height:1.4;
         ">
-            {'<br>'.join(log_messages)}
+            {'<br>'.join(combined_logs)}
         </div>
         """,
         unsafe_allow_html=True
