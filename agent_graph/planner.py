@@ -1,167 +1,229 @@
-"""
-Planner Agent for Agentic Orchestration.
-
-Decides:
-- Which sources to use (rag and/or web)
-- What filters to apply
-- What the retriever should do
-
-Improved Version:
-- Dual rag + web calls for price-check tasks
-- Availability and price comparison flags
-- Category normalization restored
-"""
+# agent_graph/planner.py
 
 from __future__ import annotations
 from typing import Dict, Any
-from .state import AgentState
+from openai import OpenAI
+import json
 
+client = OpenAI()
 
-# ------------------------------------------------------------
-# CATEGORY NORMALIZATION TABLE
-# ------------------------------------------------------------
-
-CATEGORY_MAP = {
-    "board game": "Board Games",
-    "board games": "Board Games",
-    "card game": "Card Games",
-    "card games": "Card Games",
-    "dice game": "Dice Games",
-    "dice games": "Dice Games",
-    "controller": "Controllers",
-    "controllers": "Controllers",
-    "mouse": "Mice",
-    "mice": "Mice",
-}
-
-
-def normalize_category(cat: str | None) -> str | None:
-    """Normalize user-specified categories to canonical catalog categories."""
-    if not cat:
-        return None
-    key = cat.strip().lower()
-    return CATEGORY_MAP.get(key, None)
-
-
-# ------------------------------------------------------------
-# PLANNER CLASS (Improved Version)
-# ------------------------------------------------------------
 
 class Planner:
-    def __init__(self):
-        pass
+    """
+    LLM-powered Planner Agent.
 
+    Determines:
+    - Whether to use RAG and/or live web data
+    - Whether price or availability comparisons are needed
+    - What filters (max_price, category, brand) should be set
+
+    Output schema MUST match retriever expectations:
+    {
+      "intent": "...",
+      "use_rag": true/false,
+      "use_web": true/false,
+      "compare_price": true/false,
+      "compare_availability": true/false,
+      "filters": {
+          "max_price": <number|null>,
+          "category": <string|null>,
+          "brand": <string|null>
+      }
+    }
+    """
+
+    def __init__(self):
+        # Final prompt used for every planning decision
+        self.prompt = """
+You are the Planner Agent in a shopping assistant pipeline.
+
+Your responsibility:
+Given the Router output (intent + constraints), decide HOW the system should retrieve information.
+
+You must output ONLY a JSON dictionary with this exact schema:
+
+{
+  "intent": "...",
+  "use_rag": true/false,
+  "use_web": true/false,
+  "compare_price": true/false,
+  "compare_availability": true/false,
+  "filters": {
+      "max_price": <number|null>,
+      "category": <string|null>,
+      "brand": <string|null>
+  }
+}
+
+Do NOT add extra keys.  
+Do NOT add explanations.  
+Return ONLY a JSON object.
+
+------------------------------------
+BEHAVIOR GUIDANCE (Few-shot style)
+------------------------------------
+
+The Planner infers decisions from intent + constraints.  
+The examples below are NOT strict rules, but demonstrations of correct behavior.
+
+### Example A — Price check
+Input:
+{"intent":"check_price","constraints":{}}
+
+Output:
+{
+  "intent": "check_price",
+  "use_rag": true,
+  "use_web": true,
+  "compare_price": true,
+  "compare_availability": true,
+  "filters": { "max_price": null, "category": null, "brand": null }
+}
+
+### Example B — Availability check
+Input:
+{"intent":"check_availability","constraints":{"item":"PS5 controller"}}
+
+Output:
+{
+  "intent": "check_availability",
+  "use_rag": true,
+  "use_web": true,
+  "compare_price": false,
+  "compare_availability": true,
+  "filters": { "max_price": null, "category": null, "brand": null }
+}
+
+### Example C — Search with category + budget
+Input:
+{"intent":"search","constraints":{"category":"card game","budget":20}}
+
+Output:
+{
+  "intent": "search",
+  "use_rag": true,
+  "use_web": false,
+  "compare_price": false,
+  "compare_availability": false,
+  "filters": { "max_price": 20, "category": "card game", "brand": null }
+}
+
+### Example D — General search
+Input:
+{"intent":"search","constraints":{}}
+
+Output:
+{
+  "intent": "search",
+  "use_rag": true,
+  "use_web": false,
+  "compare_price": false,
+  "compare_availability": false,
+  "filters": { "max_price": null, "category": null, "brand": null }
+}
+
+### Example E — Compare products
+Input:
+{"intent":"compare","constraints":{"items":["Nintendo Switch","PS5"]}}
+
+Output:
+{
+  "intent": "compare",
+  "use_rag": true,
+  "use_web": true,
+  "compare_price": true,
+  "compare_availability": true,
+  "filters": { "max_price": null, "category": null, "brand": null }
+}
+
+### Example F — Unknown
+Input:
+{"intent":"unknown","constraints":{}}
+
+Output:
+{
+  "intent": "unknown",
+  "use_rag": false,
+  "use_web": false,
+  "compare_price": false,
+  "compare_availability": false,
+  "filters": { "max_price": null, "category": null, "brand": null }
+}
+
+------------------------------------
+RESPONSE REQUIREMENTS
+------------------------------------
+Return ONLY valid JSON using the schema above.
+"""
+
+    # ============================================================
+    # MAIN PLANNER CALL
+    # ============================================================
     def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
 
-        raw_intent = state.get("intent", "unknown")
-        # Normalize intent for safety (handles: spaces, casing)
-        intent = raw_intent.replace(" ", "_").strip().lower()
-
+        intent = state.get("intent", "unknown")
         constraints = state.get("constraints") or {}
-        need_live = state.get("need_live_price", False)
+        debug_log = state.get("debug_log", [])
 
-        # ---------------------------
-        # Build FILTERS (for MCP tools)
-        # ---------------------------
-        filters = {
-            "max_price": constraints.get("max_price") or constraints.get("budget"),
-            "category": normalize_category(constraints.get("category")),
-            "brand": constraints.get("brand"),
+        # Compose the LLM query payload
+        planner_input = {
+            "intent": intent,
+            "constraints": constraints,
         }
 
-        # ============================================================
-        # CASE 1 — Price-check intent: use BOTH rag + web
-        # ============================================================
-        if intent == "check_price":
-            planner_output = {
-                "intent": raw_intent,
-                "use_rag": True,
-                "use_web": True,
-                "compare_price": True,
-                "compare_availability": True,
-                "filters": filters,
-            }
+        llm_query = self.prompt + f"\n\nRouter Output:\n{json.dumps(planner_input)}\n\nReturn JSON:\n"
 
-            debug_msg = (
-                "[PLANNER] Price-check intent → using BOTH rag and web. "
-                f"filters={filters}"
-            )
+        # Call LLM
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            input=llm_query
+        )
 
-        # ============================================================
-        # CASE 2 — Availability intent (Dual rag + web)
-        # ============================================================
-        elif intent == "check_availability":
-            planner_output = {
-                "intent": raw_intent,
-                "use_rag": True,
-                "use_web": True,
-                "compare_price": False,
-                "compare_availability": True,   # important!
-                "filters": filters,
-            }
+        raw_text = response.output_text.strip()
 
-            debug_msg = (
-                "[PLANNER] Availability intent → using BOTH rag and web for stock check. "
-                f"filters={filters}"
-            )
+        # Clean ```json wrappers if present
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`")
+            raw_text = raw_text.replace("json", "", 1).strip()
 
-        # ============================================================
-        # CASE 3 — Normal product search (rag only)
-        # ============================================================
-        elif intent == "search":
-            planner_output = {
-                "intent": raw_intent,
-                "use_rag": True,
+        # Parse JSON
+        try:
+            planner_dict = json.loads(raw_text)
+        except Exception:
+            # Fail-safe defaults (unknown)
+            planner_dict = {
+                "intent": intent,
+                "use_rag": False,
                 "use_web": False,
                 "compare_price": False,
                 "compare_availability": False,
-                "filters": filters,
+                "filters": {
+                    "max_price": None,
+                    "category": None,
+                    "brand": None,
+                }
             }
 
-            debug_msg = f"[PLANNER] Search intent → rag only. filters={filters}"
+        # ------------------------------------------------------------
+        # POST-PROCESSING SAFETY (ensure all required keys exist)
+        # ------------------------------------------------------------
 
-        # ============================================================
-        # CASE 4 — "Compare" queries (optional/expandable)
-        # ============================================================
-        elif intent == "compare":
-            planner_output = {
-                "intent": raw_intent,
-                "use_rag": True,
-                "use_web": True,
-                "compare_price": True,
-                "compare_availability": True,
-                "filters": filters,
-            }
+        # Ensure filters exist
+        filters = planner_dict.get("filters", {})
+        planner_dict["filters"] = {
+            "max_price": filters.get("max_price"),
+            "category": filters.get("category"),
+            "brand": filters.get("brand"),
+        }
 
-            debug_msg = (
-                "[PLANNER] Compare intent → dual rag + web. "
-                f"filters={filters}"
-            )
+        # Add debug log entry
+        debug_log.append(f"[PLANNER] {planner_dict}")
 
-        # ============================================================
-        # CASE 5 — Fallback: preserve old logic (rag or web only)
-        # ============================================================
-        else:
-            mode = "web" if need_live else "rag"
-
-            planner_output = {
-                "intent": raw_intent,
-                "use_rag": (mode == "rag"),
-                "use_web": (mode == "web"),
-                "compare_price": False,
-                "compare_availability": False,
-                "filters": filters,
-            }
-
-            debug_msg = f"[PLANNER] Default → mode={mode}, filters={filters}"
-
-        # ============================================================
-        # Return updated state
-        # ============================================================
+        # Update state
         return {
             **state,
-            "planner_output": planner_output,
-            "debug_log": state.get("debug_log", []) + [debug_msg],
+            "planner_output": planner_dict,
+            "debug_log": debug_log
         }
 
 

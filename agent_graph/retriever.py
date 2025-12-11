@@ -14,7 +14,6 @@ class Retriever:
     - Supports dual-source retrieval for price/availability checks
     - Keeps rag_results and web_results separate for the Answerer/Critic
     - Adds clear, tool-aware debug logs
-    - Does NOT reconcile conflicts (that is Answerer/Critic's job)
     """
 
     def __init__(self):
@@ -39,8 +38,6 @@ class Retriever:
         # CASE A — RAG SEARCH (private catalog)
         # ============================================================
         if use_rag:
-            # Match FastMCP rag_search signature in your MCP server:
-            # rag_search({query, category, max_price, num_results})
             rag_request = {
                 "query": query,
                 "category": filters.get("category"),
@@ -52,7 +49,7 @@ class Retriever:
 
             rag_results = self.mcp.call_tool("rag_search", rag_request)
 
-            # ---- Normalize rag_results safely ----
+            # Normalize rag_results
             if isinstance(rag_results, dict):
                 rag_items = rag_results.get("results", [])
             elif isinstance(rag_results, list):
@@ -75,7 +72,7 @@ class Retriever:
 
             web_results = self.mcp.call_tool("web_search", web_request)
 
-            # ---- Normalize web_results safely ----
+            # Normalize web_results
             if isinstance(web_results, dict):
                 web_items = web_results.get("results", [])
             elif isinstance(web_results, list):
@@ -83,13 +80,13 @@ class Retriever:
             else:
                 web_items = []
 
-            # Optional: light post-filtering on price if max_price is set
+            # Apply max price filter if needed
             max_price = filters.get("max_price")
             if max_price is not None:
                 filtered = []
                 for item in web_items:
                     price = item.get("price")
-                    # Keep items with no price (unknown) or <= max_price
+                    # allow items with unknown price (None) or <= max_price
                     if price is None or not isinstance(price, (int, float)):
                         filtered.append(item)
                     elif price <= max_price:
@@ -114,6 +111,36 @@ class Retriever:
         else:
             retrieval_source = None
             debug.append("[RETRIEVER] No retrieval tools selected by planner")
+
+        # ============================================================
+        # SIMPLE PRICE RECONCILIATION (Rubric Requirement)
+        # ============================================================
+        resolved_price = None
+        resolved_price_item = None
+
+        compare_price = plan.get("compare_price", False)
+
+        # Only reconcile when both sources used & price is relevant
+        if use_rag and use_web and compare_price:
+
+            best_item = None
+            best_price = None
+
+            for item in web_items:
+                price = item.get("price")
+                if isinstance(price, (int, float)):
+                    if best_price is None or price < best_price:
+                        best_price = price
+                        best_item = item
+
+            resolved_price = best_price
+            resolved_price_item = best_item
+
+            debug.append(f"[RETRIEVER] Resolved price = {resolved_price} item={resolved_price_item}")
+
+        # Store both fields for Answerer
+        state["resolved_price"] = resolved_price
+        state["resolved_price_item"] = resolved_price_item
 
         # ============================================================
         # Return updated state

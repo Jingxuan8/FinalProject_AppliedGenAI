@@ -174,3 +174,72 @@ For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/St
 2025-12-10 21:00:07,148 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 0.28ms | Cache: HIT
 2025-12-10 21:00:08,398 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 0.06ms | Cache: HIT
 2025-12-10 21:00:10,080 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 0.07ms | Cache: HIT
+2025-12-10 21:27:20,565 - mcp_server - INFO - __init__:99 - WebSearchTool initialized with provider: serper
+2025-12-10 21:27:20,565 - mcp_server - INFO - <module>:53 - WebSearchTool initialized successfully
+2025-12-10 21:27:22,842 - mcp_server - INFO - _init_rag:69 - Connected to vector store with 632 documents
+2025-12-10 21:27:23,052 - mcp_server - INFO - _init_openai:79 - OpenAI client initialized for LLM reranking
+2025-12-10 21:27:23,053 - mcp_server - INFO - <module>:63 - RAGSearchTool initialized with 632 documents
+2025-12-10 21:27:23,061 - mcp_server - INFO - main:215 - Starting MCP server with transport: http
+2025-12-10 21:27:23,061 - mcp_server - INFO - main:218 -   - web_search: enabled (provider: serper)
+2025-12-10 21:27:23,062 - mcp_server - INFO - main:223 -   - rag_search: enabled (632 docs)
+2025-12-10 21:27:33,828 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 100.52ms | Cache: MISS
+2025-12-10 22:38:28,143 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 248.79ms | Cache: MISS
+2025-12-10 22:38:28,395 - mcp_server - INFO - _search_serper:242 - Serper API call: What is the current price of a PS5 controller?...
+2025-12-10 22:38:29,505 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-10 22:38:29,510 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 1114.56ms | Cache: MISS
+2025-12-10 22:38:32,635 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 49.25ms | Cache: MISS
+2025-12-10 22:38:32,907 - mcp_server - INFO - _search_serper:242 - Serper API call: Is the PS5 controller in stock right now? buy...
+2025-12-10 22:38:33,852 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-10 22:38:33,855 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 948.23ms | Cache: MISS
+2025-12-10 22:38:38,085 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 138.48ms | Cache: MISS
+2025-12-10 22:38:41,786 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 34.23ms | Cache: MISS
+2025-12-10 22:38:44,367 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 25.08ms | Cache: MISS
+2025-12-10 22:38:46,958 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 30.39ms | Cache: MISS
+2025-12-10 22:38:47,309 - mcp_server - INFO - _search_serper:242 - Serper API call: Compare Nintendo Switch and PS5. buy...
+2025-12-10 22:38:48,325 - mcp_server - INFO - _search_serper:273 - Serper returned 9 results
+2025-12-10 22:38:48,331 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 1021.01ms | Cache: MISS
+2025-12-10 23:25:06,906 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 108.19ms | Cache: MISS
+2025-12-10 23:25:07,164 - mcp_server - INFO - _search_serper:242 - Serper API call: What is the current price of a PS5 controller?...
+2025-12-10 23:25:07,938 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-10 23:25:07,944 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 778.23ms | Cache: MISS
+2025-12-10 23:25:10,798 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 32.22ms | Cache: MISS
+2025-12-10 23:25:11,075 - mcp_server - INFO - _search_serper:242 - Serper API call: Is the PS5 controller in stock right now? buy...
+2025-12-10 23:25:11,746 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-10 23:25:11,748 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 673.08ms | Cache: MISS
+2025-12-10 23:25:15,088 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 145.47ms | Cache: MISS
+2025-12-10 23:25:17,771 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 24.05ms | Cache: MISS
+2025-12-10 23:25:21,176 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 40.01ms | Cache: MISS
+2025-12-10 23:25:24,294 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 21.04ms | Cache: MISS
+2025-12-10 23:25:24,595 - mcp_server - INFO - _search_serper:242 - Serper API call: Compare Nintendo Switch and PS5. buy...
+2025-12-10 23:25:25,283 - mcp_server - INFO - _search_serper:273 - Serper returned 9 results
+2025-12-10 23:25:25,291 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 693.98ms | Cache: MISS
+2025-12-10 23:33:06,892 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 59.21ms | Cache: MISS
+2025-12-10 23:33:07,131 - mcp_server - INFO - _search_serper:242 - Serper API call: What is the current price of a PS5 controller?...
+2025-12-10 23:33:08,151 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-10 23:33:08,158 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 1025.33ms | Cache: MISS
+2025-12-10 23:33:11,085 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 21.66ms | Cache: MISS
+2025-12-10 23:33:11,378 - mcp_server - INFO - _search_serper:242 - Serper API call: Is the PS5 controller in stock right now? buy...
+2025-12-10 23:33:11,982 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-10 23:33:11,989 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 609.02ms | Cache: MISS
+2025-12-10 23:33:15,284 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 21.11ms | Cache: MISS
+2025-12-10 23:33:18,123 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 21.57ms | Cache: MISS
+2025-12-10 23:33:21,102 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 30.84ms | Cache: MISS
+2025-12-10 23:33:23,664 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 13.56ms | Cache: MISS
+2025-12-10 23:33:23,942 - mcp_server - INFO - _search_serper:242 - Serper API call: Compare Nintendo Switch and PS5. buy...
+2025-12-10 23:33:24,649 - mcp_server - INFO - _search_serper:273 - Serper returned 9 results
+2025-12-10 23:33:24,652 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 709.69ms | Cache: MISS
+2025-12-11 00:08:14,019 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 189.05ms | Cache: MISS
+2025-12-11 00:08:14,310 - mcp_server - INFO - _search_serper:242 - Serper API call: What is the current price of a PS5 controller?...
+2025-12-11 00:08:15,149 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-11 00:08:15,156 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 843.18ms | Cache: MISS
+2025-12-11 00:08:24,695 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 21.00ms | Cache: MISS
+2025-12-11 00:08:24,978 - mcp_server - INFO - _search_serper:242 - Serper API call: Is the PS5 controller in stock right now? buy...
+2025-12-11 00:08:25,636 - mcp_server - INFO - _search_serper:273 - Serper returned 10 results
+2025-12-11 00:08:25,643 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 662.99ms | Cache: MISS
+2025-12-11 00:08:35,703 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 92.51ms | Cache: MISS
+2025-12-11 00:08:46,141 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 23.01ms | Cache: MISS
+2025-12-11 00:08:56,149 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 17.00ms | Cache: MISS
+2025-12-11 00:09:06,445 - mcp_server - INFO - log_tool_call:137 - Tool call: rag.search | Duration: 16.00ms | Cache: MISS
+2025-12-11 00:09:06,716 - mcp_server - INFO - _search_serper:242 - Serper API call: Compare Nintendo Switch and PS5. buy...
+2025-12-11 00:09:07,652 - mcp_server - INFO - _search_serper:273 - Serper returned 9 results
+2025-12-11 00:09:07,661 - mcp_server - INFO - log_tool_call:137 - Tool call: web.search | Duration: 942.22ms | Cache: MISS

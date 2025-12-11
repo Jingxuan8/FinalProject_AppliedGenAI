@@ -1,0 +1,267 @@
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Users\fanmu\PycharmProjects\FinalProject_AppliedGenAI> python test_full_pipeline_answerer.py
+
+======================================================================
+USER QUERY: What is the current price of a PS5 controller?
+======================================================================
+
+--- ROUTER OUTPUT ---
+intent: check_price
+constraints: {'item': 'PS5 controller'}
+safety_flag: False
+
+--- PLANNER OUTPUT ---
+{'intent': 'check_price', 'use_rag': True, 'use_web': True, 'compare_price': True, 'compare_availability': True, 'filters': {'max_price': None, 'category': None, 'brand': None}}
+C:\Users\fanmu\AppData\Local\Programs\Python\Python311\Lib\site-packages\google\adk\tools\mcp_tool\mcp_tool.py:88: UserWarning: [EXPERIMENTAL] BaseAuthenticatedTool: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__(
+Error during disconnected session cleanup: generator didn't stop after athrow()
+
+--- RETRIEVER OUTPUT ---
+retrieval_source: mixed
+resolved_price: 44.99
+resolved_price_item: {'title': 'PS5 Controllers: PlayStation 5 Controllers | GameStop', 'url': 'https://www.gamestop.com/gaming-accessories/controllers/playstation-5', 'snippet': 'Sony DualSense Wireless Controller for PlayStation 5 - Midnight Black · $44.99 ; Sony DualSense Wireless Controller for PlayStation 5 - White · $54.99 ; Sony ...', 'price': 44.99, 'availability': None, 'source': 'www.gamestop.com'}
+rag_results: [{'sku': 'ab21924779452d9d6920d69cccfec9d6', 'doc_id': 'ab21924779452d9d6920d69cccfec9d6', 'title': 'Renegade Game Studios Bargain Quest Solo Mode Toy', 'price': 8.4, 'rating': None, 'brand': 'Renegade', 'category': 'Toys & Games | Games & Accessories', 'features': [], 'ingredients': '', 'relevance_score': 0.3587, 'product_url': 'https://www.amazon.com/Renegade-Game-Studios-Bargain-Quest/dp/B07NJL369K'}, {'sku': '500b495ddd3566dd073c30abd246faa3', 'doc_id': '500b495ddd3566dd073c30abd246faa3', 'title': 'Basic Fun Arcade Classics - Tetris Retro Mini Arcade Game', 'price': 19.99, 'rating': None, 'brand': 'Basic', 'category': 'Toys & Games | Games & Accessories | Game Collections', 'features': [], 'ingredients': '', 'relevance_score': 0.3147, 'product_url': 'https://www.amazon.com/Basic-Fun-Arcade-Classics-Tetris/dp/B07CRNZQ97'}, {'sku': '717efb54ea2d0b790b59287fed4c1c4c', 'doc_id': '717efb54ea2d0b790b59287fed4c1c4c', 'title': 'Advanced Primate Entertainment Rolling Freight', 'price': 51.8, 'rating': None, 'brand': 'Advanced', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2873, 'product_url': 'https://www.amazon.com/Advanced-Primate-Entertainment-Rolling-Freight/dp/0966347692'}, {'sku': 'c43ec22ca479fb6209ed2dffee1add0e', 'doc_id': 'c43ec22ca479fb6209ed2dffee1add0e', 'title': 'Catalyst Game Labs Dragonfire Adventures Ravaging The Sword Coast', 'price': 18.91, 'rating': None, 'brand': 'Catalyst', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2856, 'product_url': 'https://www.amazon.com/Dungeons-Dragons-Dragonfire-Adventures-Ravaging/dp/B07F4J9JY9'}, {'sku': '6eb42b794a0e150cd99d0758832ffaa5', 'doc_id': '6eb42b794a0e150cd99d0758832ffaa5', 'title': 'Rustik BJR000129 Tock Game 6 Players, Multicolor', 'price': 29.99, 'rating': None, 'brand': 'Rustik', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2847, 'product_url': 'https://www.amazon.com/RUSTIK-BJR000129-Tock-Players-Multicolor/dp/B003D9A2T4'}]
+web_results: [{'title': 'Buy PS5 controllers, headsets and accessories - PlayStation Direct', 'url': 'https://direct.playstation.com/en-us/accessories/ps5', 'snippet': 'DualSense® Wireless Controller - Ghost of Yotei Black Limited Edition. $ 64 . 99. $ 84 . 99. Currently Unavailable. Coming Soon. Sign In to Buy. Low stock.', 'price': None, 'availability': None, 'source': 'direct.playstation.com'}, {'title': 'PS5 Controllers - Best Buy', 'url': 'https://www.bestbuy.com/site/ps5-accessories/ps5-controllers/pcmcat1587395747680.c?id=pcmcat1587395747680', 'snippet': 'Shop Best Buy for PS5 controllers. Set yourself up for gaming success using PlayStation 5 controllers designed with haptic feedback for quick action ...', 'price': None, 'availability': None, 'source': 'www.bestbuy.com'}, {'title': 'PS5 Controllers: PlayStation 5 Controllers | GameStop', 'url': 'https://www.gamestop.com/gaming-accessories/controllers/playstation-5', 'snippet': 'Sony DualSense Wireless Controller for PlayStation 5 - Midnight Black · $44.99 ; Sony DualSense Wireless Controller for PlayStation 5 - White · $54.99 ; Sony ...', 'price': 44.99, 'availability': None, 'source': 'www.gamestop.com'}, {'title': 'PlayStation DualSense® Wireless Controller - White - Amazon.com', 'url': 'https://www.amazon.com/PlayStation-DualSense%C2%AE-Wireless-Controller-White-5/dp/B0CQKLS4RP', 'snippet': 'The DualSense wireless controller offers immersive haptic feedback, dynamic adaptive triggers and a built-in microphone, all integrated into an iconic ...', 'price': None, 'availability': None, 'source': 'www.amazon.com'}, {'title': 'PlayStation accessories | Official PS5 controllers, audio headsets ...', 'url': 'https://www.playstation.com/en-us/accessories/', 'snippet': 'Discover the range of official PlayStation controllers for PS5 and PS4, plus gaming audio headsets, cameras and more for PlayStation 5 and PlayStation 4.', 'price': None, 'availability': None, 'source': 'www.playstation.com'}]
+
+--- ANSWERER PAPER ANSWER ---
+The current price for a PS5 controller is $44.99, as listed on GameStop's website, which is the best current live price available [1]. This price reflects the most up-to-date information from live web sources.
+
+While there are no catalog items specifically for PS5 controllers, the live web search indicates that GameStop is a reliable source for purchasing this accessory. Other retailers such as PlayStation Direct and Best Buy also list PS5 controllers, but their current prices and availability are not specified [2][3].
+
+--- ANSWERER SPEECH ANSWER ---
+The current price of a PS5 controller is around 45 dollars at GameStop. If you're looking to buy one, that's a great option!
+
+--- CITATIONS ---
+[1] {'title': 'PS5 Controllers: PlayStation 5 Controllers | GameStop', 'url': 'https://www.gamestop.com/gaming-accessories/controllers/playstation-5'}
+[2] {'title': 'Renegade Game Studios Bargain Quest Solo Mode Toy', 'url': 'https://www.amazon.com/Renegade-Game-Studios-Bargain-Quest/dp/B07NJL369K'}
+[3] {'title': 'Basic Fun Arcade Classics - Tetris Retro Mini Arcade Game', 'url': 'https://www.amazon.com/Basic-Fun-Arcade-Classics-Tetris/dp/B07CRNZQ97'}
+[4] {'title': 'Buy PS5 controllers, headsets and accessories - PlayStation Direct', 'url': 'https://direct.playstation.com/en-us/accessories/ps5'}
+[5] {'title': 'PS5 Controllers - Best Buy', 'url': 'https://www.bestbuy.com/site/ps5-accessories/ps5-controllers/pcmcat1587395747680.c?id=pcmcat1587395747680'}
+
+--- DEBUG LOG (LAST 5 ENTRIES) ---
+[RETRIEVER] rag returned 5 items
+[RETRIEVER] web_search args={'query': 'What is the current price of a PS5 controller?', 'num_results': 5}
+[RETRIEVER] web returned 5 items
+[RETRIEVER] Resolved price = 44.99 item={'title': 'PS5 Controllers: PlayStation 5 Controllers | GameStop', 'url': 'https://www.gamestop.com/gaming-accessories/controllers/playstation-5', 'snippet': 'Sony DualSense Wireless Controller for PlayStation 5 - Midnight Black · $44.99 ; Sony DualSense Wireless Controller for PlayStation 5 - White · $54.99 ; Sony ...', 'price': 44.99, 'availability': None, 'source': 'www.gamestop.com'}
+[ANSWERER] Generated paper_answer, speech_answer, and citations.
+
+======================================================================
+USER QUERY: Is the PS5 controller in stock right now?
+======================================================================
+
+--- ROUTER OUTPUT ---
+intent: check_availability
+constraints: {'item': 'PS5 controller'}
+safety_flag: False
+
+--- PLANNER OUTPUT ---
+{'intent': 'check_availability', 'use_rag': True, 'use_web': True, 'compare_price': False, 'compare_availability': True, 'filters': {'max_price': None, 'category': None, 'brand': None}}
+Error during disconnected session cleanup: generator didn't stop after athrow()
+
+--- RETRIEVER OUTPUT ---
+retrieval_source: mixed
+resolved_price: None
+resolved_price_item: None
+rag_results: [{'sku': '500b495ddd3566dd073c30abd246faa3', 'doc_id': '500b495ddd3566dd073c30abd246faa3', 'title': 'Basic Fun Arcade Classics - Tetris Retro Mini Arcade Game', 'price': 19.99, 'rating': None, 'brand': 'Basic', 'category': 'Toys & Games | Games & Accessories | Game Collections', 'features': [], 'ingredients': '', 'relevance_score': 0.3114, 'product_url': 'https://www.amazon.com/Basic-Fun-Arcade-Classics-Tetris/dp/B07CRNZQ97'}, {'sku': 'ab21924779452d9d6920d69cccfec9d6', 'doc_id': 'ab21924779452d9d6920d69cccfec9d6', 'title': 'Renegade Game Studios Bargain Quest Solo Mode Toy', 'price': 8.4, 'rating': None, 'brand': 'Renegade', 'category': 'Toys & Games | Games & Accessories', 'features': [], 'ingredients': '', 'relevance_score': 0.2799, 'product_url': 'https://www.amazon.com/Renegade-Game-Studios-Bargain-Quest/dp/B07NJL369K'}, {'sku': '75cee6637016dcdc96260946913551b1', 'doc_id': '75cee6637016dcdc96260946913551b1', 'title': 'Diamonsters', 'price': 12.4, 'rating': None, 'brand': 'Diamonsters', 'category': 'Toys & Games | Games & Accessories | Card Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2789, 'product_url': 'https://www.amazon.com/Pandasaurus-Games-739IDW-Diamonsters/dp/B00OMXVH12'}, {'sku': '4885c582fc0ae5d2fcc82e60e6549dbd', 'doc_id': '4885c582fc0ae5d2fcc82e60e6549dbd', 'title': 'Melissa & Doug Jacks Game with 10 Playing Pieces and 2 Balls in Wooden Storage Box, Great Gift for Girls and Boys - Best for 6, 7, 8 Year Olds and Up', 'price': 9.99, 'rating': None, 'brand': 'Melissa', 'category': 'Toys & Games | Games & Accessories', 'features': [], 'ingredients': '', 'relevance_score': 0.2741, 'product_url': 'https://www.amazon.com/Melissa-Doug-Playing-Pieces-Storage/dp/B07VZL4JLQ'}, {'sku': '65c78a1694bac1fe72cf1efda477792e', 'doc_id': '65c78a1694bac1fe72cf1efda477792e', 'title': 'IDW Games Teenage Mutant Ninja Turtles: Splinter Hero Pack Accessory', 'price': 16.99, 'rating': None, 'brand': 'IDW', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2643, 'product_url': 'https://www.amazon.com/IDW-Games-Teenage-Mutant-Turtles/dp/B075BC9GJV'}]
+web_results: [{'title': 'Buy PS5 controllers, headsets and accessories - PlayStation Direct', 'url': 'https://direct.playstation.com/en-us/accessories/ps5', 'snippet': 'Shop PlayStation®5 accessories including the DualSense PS5 controller and Pulse 3D Wireless Headset. Buy now directly from PlayStation.', 'price': None, 'availability': None, 'source': 'direct.playstation.com'}, {'title': 'PS5 Controllers - Best Buy', 'url': 'https://www.bestbuy.com/site/ps5-accessories/ps5-controllers/pcmcat1587395747680.c?id=pcmcat1587395747680', 'snippet': 'Shop Best Buy for PS5 controllers. Set yourself up for gaming success using PlayStation 5 controllers designed with haptic feedback for quick action ...', 'price': None, 'availability': None, 'source': 'www.bestbuy.com'}, {'title': 'Sony DualSense Wireless Controller - PS5 Controller - GameStop', 'url': 'https://www.gamestop.com/gaming-accessories/controllers/playstation-5/products/sony-dualsense-wireless-controller-for-playstation-5/11106262.html', 'snippet': 'Out of stock. Pros, Save $25 When You Buy $250+ in‑store or buy online & pick up in‑store - Learn more. Sony DualSense Wireless Controller for PlayStation 5.', 'price': 25.0, 'availability': None, 'source': 'www.gamestop.com'}, {'title': 'Sony PS5 DualSense Wireless Controller - Icon Blue - Walmart.com', 'url': 'https://www.walmart.com/ip/DualSense-wireless-controller-TBD-LE/18022562689', 'snippet': "Sony PS5 DualSense Wireless Controller - Icon Blue ; How you'll get this item: · You get 30 days free! Choose a plan at checkout. ; Arrives by Today ; Order within ...", 'price': None, 'availability': None, 'source': 'www.walmart.com'}, {'title': 'Will the 30th anniversary DualShock controller ever be restocked', 'url': 'https://www.reddit.com/r/playstation/comments/1pjcjiy/will_the_30th_anniversary_dualshock_controller/', 'snippet': "From all their limited edition controllers, I'd say this one was restocked the most. Plenty of opportunities to buy one tbh.", 'price': None, 'availability': None, 'source': 'www.reddit.com'}]
+
+--- ANSWERER PAPER ANSWER ---
+Currently, the availability of the PS5 controller is unclear based on the information retrieved. While there are several retailers listed online, including PlayStation Direct and Best Buy, none of them provide specific stock status for the PS5 controller at this time. Additionally, GameStop offers the Sony DualSense Wireless Controller for $25.00, but it is not confirmed whether it is in stock [1][2][3].
+
+If you are looking to purchase a PS5 controller, I recommend checking the websites of these retailers directly for the most accurate and up-to-date availability information.
+
+--- ANSWERER SPEECH ANSWER ---
+It looks like the PS5 controller is available at GameStop for around 25 dollars. You might want to check their website for the latest stock updates.
+
+--- CITATIONS ---
+[1] {'title': 'Basic Fun Arcade Classics - Tetris Retro Mini Arcade Game', 'url': 'https://www.amazon.com/Basic-Fun-Arcade-Classics-Tetris/dp/B07CRNZQ97'}
+[2] {'title': 'Renegade Game Studios Bargain Quest Solo Mode Toy', 'url': 'https://www.amazon.com/Renegade-Game-Studios-Bargain-Quest/dp/B07NJL369K'}
+[3] {'title': 'Buy PS5 controllers, headsets and accessories - PlayStation Direct', 'url': 'https://direct.playstation.com/en-us/accessories/ps5'}
+[4] {'title': 'PS5 Controllers - Best Buy', 'url': 'https://www.bestbuy.com/site/ps5-accessories/ps5-controllers/pcmcat1587395747680.c?id=pcmcat1587395747680'}
+[5] {'title': 'Sony DualSense Wireless Controller - PS5 Controller - GameStop', 'url': 'https://www.gamestop.com/gaming-accessories/controllers/playstation-5/products/sony-dualsense-wireless-controller-for-playstation-5/11106262.html'}
+
+--- DEBUG LOG (LAST 5 ENTRIES) ---
+[RETRIEVER] rag_search args={'query': 'Is the PS5 controller in stock right now?', 'category': None, 'max_price': None, 'num_results': 5}
+[RETRIEVER] rag returned 5 items
+[RETRIEVER] web_search args={'query': 'Is the PS5 controller in stock right now?', 'num_results': 5}
+[RETRIEVER] web returned 5 items
+[ANSWERER] Generated paper_answer, speech_answer, and citations.
+
+======================================================================
+USER QUERY: Recommend a card game under 20 dollars.
+======================================================================
+
+--- ROUTER OUTPUT ---
+intent: search
+constraints: {'category': 'card game', 'budget': 20}
+safety_flag: False
+
+--- PLANNER OUTPUT ---
+{'intent': 'search', 'use_rag': True, 'use_web': False, 'compare_price': False, 'compare_availability': False, 'filters': {'max_price': 20, 'category': 'card game', 'brand': None}}
+
+--- RETRIEVER OUTPUT ---
+retrieval_source: rag
+resolved_price: None
+resolved_price_item: None
+rag_results: [{'sku': '2a4aa091c8c6bff40996f7914cc74962', 'doc_id': '2a4aa091c8c6bff40996f7914cc74962', 'title': 'Think Fun Last Letter Card Game', 'price': 12.95, 'rating': None, 'brand': 'Think', 'category': 'Toys & Games | Games & Accessories | Card Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5685, 'product_url': 'https://www.amazon.com/Think-Fun-Last-Letter-Card/dp/B00GRV5JKW'}, {'sku': 'd8891becd44ffb4eb7abbf552cb32e10', 'doc_id': 'd8891becd44ffb4eb7abbf552cb32e10', 'title': 'DJECO Card Game\xa0–\xa0Pipolo', 'price': 6.53, 'rating': None, 'brand': 'DJECO', 'category': 'Toys & Games | Games & Accessories | Card Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5601, 'product_url': 'https://www.amazon.com/DJECO-Card-Game-Pipolo-016/dp/B00OXJ799E'}, {'sku': '66d6b4d433bdd3ac8de21aa7b4dd63d8', 'doc_id': '66d6b4d433bdd3ac8de21aa7b4dd63d8', 'title': 'Steve Jackson Games Munchkin Pathfinder: Truly Gobnoxious Card Game (6 Player)', 'price': 5.95, 'rating': None, 'brand': 'Steve', 'category': 'Toys & Games | Games & Accessories | Card Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5278, 'product_url': 'https://www.amazon.com/Steve-Jackson-Games-Munchkin-Pathfinder/dp/B01MRP63PI'}, {'sku': '3dee473b8d8ccc4838806a10c079abc5', 'doc_id': '3dee473b8d8ccc4838806a10c079abc5', 'title': 'Ideal War Card Game', 'price': 6.19, 'rating': None, 'brand': 'Ideal', 'category': 'Toys & Games | Games & Accessories | Card Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5099, 'product_url': 'https://www.amazon.com/Ideal-0X8-3204-War-Card-Game/dp/B000MVDLE4'}, {'sku': '44a034ded194fbaf187166454ccfec11', 'doc_id': '44a034ded194fbaf187166454ccfec11', 'title': 'Family Feud Strikeout Card Game', 'price': 5.85, 'rating': None, 'brand': 'Family', 'category': 'Toys & Games | Games & Accessories | Card Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5052, 'product_url': 'https://www.amazon.com/Family-Feud-Strikeout-Card-Game/dp/B0053H4MDG'}]
+web_results: []
+
+--- ANSWERER PAPER ANSWER ---
+Here are some recommended card games under $20:
+
+1. **Think Fun Last Letter Card Game** - Priced at $12.95, this game is designed for players to think quickly and creatively as they come up with words. It's suitable for various ages and can be a fun addition to family game nights [1].
+
+2. **DJECO Card Game – Pipolo** - This game is available for just $6.53. It's a simple and engaging card game that is great for younger players, making it a perfect choice for families [2].
+
+3. **Steve Jackson Games Munchkin Pathfinder: Truly Gobnoxious Card Game** - At only $5.95, this game offers a humorous take on the classic Munchkin gameplay, tailored for fans of the Pathfinder RPG [3].
+
+All these options are well within your budget and provide a variety of gameplay experiences.
+
+--- ANSWERER SPEECH ANSWER ---
+I found some great card games under twenty dollars for you! The DJECO card game Pipolo is just six dollars and fifty-three cents, while the Steve Jackson Games Munchkin Pathfinder is even cheaper at five dollars and ninety-five cents. If you're looking for something a bit different, the Think Fun Last Letter card game is available for twelve dollars and ninety-five cents. Happy gaming!
+
+--- CITATIONS ---
+[1] {'title': 'Think Fun Last Letter Card Game', 'url': 'https://www.amazon.com/Think-Fun-Last-Letter-Card/dp/B00GRV5JKW'}
+[2] {'title': 'DJECO Card Game\xa0–\xa0Pipolo', 'url': 'https://www.amazon.com/DJECO-Card-Game-Pipolo-016/dp/B00OXJ799E'}
+
+--- DEBUG LOG (LAST 5 ENTRIES) ---
+[ROUTER] intent=search, constraints={'category': 'card game', 'budget': 20}, safety=False
+[PLANNER] {'intent': 'search', 'use_rag': True, 'use_web': False, 'compare_price': False, 'compare_availability': False, 'filters': {'max_price': 20, 'category': 'card game', 'brand': None}}
+[RETRIEVER] rag_search args={'query': 'Recommend a card game under 20 dollars.', 'category': 'card game', 'max_price': 20, 'num_results': 5}
+[RETRIEVER] rag returned 5 items
+[ANSWERER] Generated paper_answer, speech_answer, and citations.
+
+======================================================================
+USER QUERY: Recommend a cooperative board game.
+======================================================================
+
+--- ROUTER OUTPUT ---
+intent: search
+constraints: {'category': 'board game', 'style': 'cooperative'}
+safety_flag: False
+
+--- PLANNER OUTPUT ---
+{'intent': 'search', 'use_rag': True, 'use_web': False, 'compare_price': False, 'compare_availability': False, 'filters': {'max_price': None, 'category': 'board game', 'brand': None}}
+
+--- RETRIEVER OUTPUT ---
+retrieval_source: rag
+resolved_price: None
+resolved_price_item: None
+rag_results: [{'sku': '654f0f2a08e6c6a850fa7a7c8ef1b3f2', 'doc_id': '654f0f2a08e6c6a850fa7a7c8ef1b3f2', 'title': 'Brain Games Voila! Board Game - A Fast and Fun Family Board Game - Play with Kids, Teenagers and Adults - Award Winning Games for Children, Families & Casual Gamers', 'price': 15.59, 'rating': None, 'brand': 'Brain', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5738, 'product_url': 'https://www.amazon.com/BRAIN-GAMES-Voila-Family-Board/dp/B01B2O2NS4'}, {'sku': 'afe0f32d8e82efe93aaab4c2eb8d6a93', 'doc_id': 'afe0f32d8e82efe93aaab4c2eb8d6a93', 'title': 'Tic Tac Two – Strategy-Based Board Game for Families', 'price': 11.67, 'rating': None, 'brand': 'Tic', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.5158, 'product_url': 'https://www.amazon.com/Tic-Tac-Two-Strategy-Based-Families/dp/B07HNQ5PJS'}, {'sku': 'fee9e9748490d0b9ccd6568c97dabf12', 'doc_id': 'fee9e9748490d0b9ccd6568c97dabf12', 'title': 'American Educational Math Attack Board Game', 'price': 23.0, 'rating': None, 'brand': 'American', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.4981, 'product_url': 'https://www.amazon.com/American-Educational-Math-Attack-Board/dp/B00845S18G'}, {'sku': '28c4eee49fd1fd1c5be2780b8be723fe', 'doc_id': '28c4eee49fd1fd1c5be2780b8be723fe', 'title': 'Portal Games Monolith Arena', 'price': 34.45, 'rating': None, 'brand': 'Portal', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.4691, 'product_url': 'https://www.amazon.com/Portal-Games-POP00378-Monolith-Arena/dp/B079T8LRXZ'}, {'sku': '8c35b63b8200355a4cd032fe02563d66', 'doc_id': '8c35b63b8200355a4cd032fe02563d66', 'title': 'Out of Order - Title Unscrambling Game', 'price': 8.54, 'rating': None, 'brand': 'Out', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.4642, 'product_url': 'https://www.amazon.com/Out-Order-Title-Unscrambling-Game/dp/B06WVBPBL9'}]
+web_results: []
+
+--- ANSWERER PAPER ANSWER ---
+For a cooperative board game, I recommend the following options from our catalog:
+
+1. **Brain Games Voila! Board Game** - This is a fast and fun family game suitable for kids, teenagers, and adults. It has received awards for its engaging gameplay and is priced at $15.59 [1].
+
+2. **Tic Tac Two** - A strategy-based board game designed for families, offering a unique twist on the classic game. It is available for $11.67 [2].
+
+3. **American Educational Math Attack Board Game** - This game combines fun with educational content, making it a great choice for families looking to enhance math skills while playing. It is priced at $23.00 [3].
+
+Currently, there are no live web items available for comparison, so I cannot provide updated pricing or availability information. However, the prices listed are from our catalog and reflect the current offerings.
+
+--- ANSWERER SPEECH ANSWER ---
+I recommend checking out "Tic Tac Two," a strategy-based board game for families, priced at around eleven dollars. Another great option is "Brain Games Voila!" which is a fun family game available for about sixteen dollars. If you're looking for something educational, "Math Attack" is also a solid choice at around twenty-three dollars.
+
+--- CITATIONS ---
+[1] {'title': 'Brain Games Voila! Board Game - A Fast and Fun Family Board Game - Play with Kids, Teenagers and Adults - Award Winning Games for Children, Families & Casual Gamers', 'url': 'https://www.amazon.com/BRAIN-GAMES-Voila-Family-Board/dp/B01B2O2NS4'}
+[2] {'title': 'Tic Tac Two – Strategy-Based Board Game for Families', 'url': 'https://www.amazon.com/Tic-Tac-Two-Strategy-Based-Families/dp/B07HNQ5PJS'}
+
+--- DEBUG LOG (LAST 5 ENTRIES) ---
+[ROUTER] intent=search, constraints={'category': 'board game', 'style': 'cooperative'}, safety=False
+[PLANNER] {'intent': 'search', 'use_rag': True, 'use_web': False, 'compare_price': False, 'compare_availability': False, 'filters': {'max_price': None, 'category': 'board game', 'brand': None}}
+[RETRIEVER] rag_search args={'query': 'Recommend a cooperative board game.', 'category': 'board game', 'max_price': None, 'num_results': 5}
+[RETRIEVER] rag returned 5 items
+[ANSWERER] Generated paper_answer, speech_answer, and citations.
+
+======================================================================
+USER QUERY: Tell me something interesting to buy.
+======================================================================
+
+--- ROUTER OUTPUT ---
+intent: search
+constraints: {}
+safety_flag: False
+
+--- PLANNER OUTPUT ---
+{'intent': 'search', 'use_rag': True, 'use_web': False, 'compare_price': False, 'compare_availability': False, 'filters': {'max_price': None, 'category': None, 'brand': None}}
+
+--- RETRIEVER OUTPUT ---
+retrieval_source: rag
+resolved_price: None
+resolved_price_item: None
+rag_results: [{'sku': '06ec7d2633b31afe0b241ac85b2a002c', 'doc_id': '06ec7d2633b31afe0b241ac85b2a002c', 'title': 'Chronicle Books Who Will My Lover Be? Game Box (Fun Fortune Telling Gift, Vintage Inspired Novelty Game)', 'price': 62.03, 'rating': None, 'brand': 'Chronicle', 'category': 'Toys & Games | Games & Accessories | Game Collections', 'features': [], 'ingredients': '', 'relevance_score': 0.3866, 'product_url': 'https://www.amazon.com/Who-Will-Lover-Game-Box/dp/1452154325'}, {'sku': '59e7639b9ccde8f751782308d0a3b47d', 'doc_id': '59e7639b9ccde8f751782308d0a3b47d', 'title': 'Board Games Always Make Me Happy Board Games Quote T-Shirt', 'price': 16.89, 'rating': None, 'brand': 'Board', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.3852, 'product_url': 'https://www.amazon.com/Board-Games-Always-Happy-T-Shirt/dp/B07CLT58FY'}, {'sku': '709d60ed9291dd94119e2a867b795995', 'doc_id': '709d60ed9291dd94119e2a867b795995', 'title': 'AQUARIUS Where The Wild Things are Playing Cards', 'price': 9.99, 'rating': None, 'brand': 'AQUARIUS', 'category': 'Toys & Games | Games & Accessories | Card Games | Standard Playing Card Decks', 'features': [], 'ingredients': '', 'relevance_score': 0.3636, 'product_url': 'https://www.amazon.com/AQUARIUS-Where-Things-Playing-Cards/dp/B082N7PB7G'}, {'sku': '5484392f0a7836a7ae9c7b6c540d48b6', 'doc_id': '5484392f0a7836a7ae9c7b6c540d48b6', 'title': 'LIKEWISE! The laughable, lively like-minded party game!', 'price': 17.47, 'rating': None, 'brand': 'LIKEWISE!', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.3611, 'product_url': 'https://www.amazon.com/LIKEWISE-laughable-lively-like-minded-party/dp/B0016MR950'}, {'sku': '41809eebe627b9fcee50c0fcd2c72283', 'doc_id': '41809eebe627b9fcee50c0fcd2c72283', 'title': 'The Purple Cow Magnetic to Go Backpack World Rummy Travel Game - Magnet Board Game Set for Both at Home & in The Car & On The Go - for Traveler Kids - 7-Year-Old & Up - Traveling Adults - 50 Mag', 'price': 12.0, 'rating': None, 'brand': 'The', 'category': 'Toys & Games | Games & Accessories | Travel Games', 'features': [], 'ingredients': '', 'relevance_score': 0.3573, 'product_url': 'https://www.amazon.com/Purple-Cow-Magnetic-Backpack-Travel/dp/B073SJB84C'}]
+web_results: []
+
+--- ANSWERER PAPER ANSWER ---
+Here are some interesting items you might consider purchasing:
+
+1. **Chronicle Books Who Will My Lover Be? Game Box** - This vintage-inspired novelty game is a fun fortune-telling gift priced at $62.03. It's perfect for game nights or as a unique gift for someone special [1].
+
+2. **Board Games Always Make Me Happy Board Games Quote T-Shirt** - For board game enthusiasts, this T-shirt is a delightful way to express their passion, available for $16.89 [2].
+
+3. **AQUARIUS Where The Wild Things are Playing Cards** - These playing cards, inspired by the classic children's book, are priced at $9.99 and make a great addition to any game collection [3].
+
+All prices are sourced from our catalog, and availability details are currently unclear. If you're interested in any of these items, they could be a fun addition to your collection or a thoughtful gift!
+
+--- ANSWERER SPEECH ANSWER ---
+Here are some interesting items you might like! The Chronicle Books "Who Will My Lover Be?" game box is a fun fortune-telling gift priced at around sixty-two dollars. If you're looking for something more casual, check out the "Board Games Always Make Me Happy" T-shirt for about seventeen dollars. Lastly, there's the AQUARIUS "Where The Wild Things Are" playing cards available for around ten dollars.
+
+--- CITATIONS ---
+[1] {'title': 'Chronicle Books Who Will My Lover Be? Game Box (Fun Fortune Telling Gift, Vintage Inspired Novelty Game)', 'url': 'https://www.amazon.com/Who-Will-Lover-Game-Box/dp/1452154325'}
+[2] {'title': 'Board Games Always Make Me Happy Board Games Quote T-Shirt', 'url': 'https://www.amazon.com/Board-Games-Always-Happy-T-Shirt/dp/B07CLT58FY'}
+
+--- DEBUG LOG (LAST 5 ENTRIES) ---
+[ROUTER] intent=search, constraints={}, safety=False
+[PLANNER] {'intent': 'search', 'use_rag': True, 'use_web': False, 'compare_price': False, 'compare_availability': False, 'filters': {'max_price': None, 'category': None, 'brand': None}}
+[RETRIEVER] rag_search args={'query': 'Tell me something interesting to buy.', 'category': None, 'max_price': None, 'num_results': 5}
+[RETRIEVER] rag returned 5 items
+[ANSWERER] Generated paper_answer, speech_answer, and citations.
+
+======================================================================
+USER QUERY: Compare Nintendo Switch and PS5.
+======================================================================
+
+--- ROUTER OUTPUT ---
+intent: compare
+constraints: {'items': ['Nintendo Switch', 'PS5']}
+safety_flag: False
+
+--- PLANNER OUTPUT ---
+{'intent': 'compare', 'use_rag': True, 'use_web': True, 'compare_price': True, 'compare_availability': True, 'filters': {'max_price': None, 'category': None, 'brand': None}}
+Error during disconnected session cleanup: generator didn't stop after athrow()
+
+--- RETRIEVER OUTPUT ---
+retrieval_source: mixed
+resolved_price: None
+resolved_price_item: None
+rag_results: [{'sku': '500b495ddd3566dd073c30abd246faa3', 'doc_id': '500b495ddd3566dd073c30abd246faa3', 'title': 'Basic Fun Arcade Classics - Tetris Retro Mini Arcade Game', 'price': 19.99, 'rating': None, 'brand': 'Basic', 'category': 'Toys & Games | Games & Accessories | Game Collections', 'features': [], 'ingredients': '', 'relevance_score': 0.2902, 'product_url': 'https://www.amazon.com/Basic-Fun-Arcade-Classics-Tetris/dp/B07CRNZQ97'}, {'sku': '22d1c2df445c57f94f1215e43d936bbd', 'doc_id': '22d1c2df445c57f94f1215e43d936bbd', 'title': 'Marvel I Can Do That! Game', 'price': 14.99, 'rating': None, 'brand': 'Marvel', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2845, 'product_url': 'https://www.amazon.com/Marvel-Can-Do-That-Game/dp/B01DDUHO7A'}, {'sku': '4c9eeb449d7e4e7355806c61b5cc988d', 'doc_id': '4c9eeb449d7e4e7355806c61b5cc988d', 'title': 'Disney Colorbrain, The Ultimate Board Game for Families who Love Disney', 'price': 10.99, 'rating': None, 'brand': 'Disney', 'category': 'Toys & Games | Games & Accessories', 'features': [], 'ingredients': '', 'relevance_score': 0.2503, 'product_url': 'https://www.amazon.com/Big-Potato-Disney-Colorbrain-Family/dp/B07HFRSHHS'}, {'sku': 'ddc4a5b433f0eeedf098e0deee773493', 'doc_id': 'ddc4a5b433f0eeedf098e0deee773493', 'title': 'Hasbro Gaming Bop It! Electronic Game Star Wars Chewie Edition for Kids Ages 8 & Up', 'price': 14.88, 'rating': None, 'brand': 'Hasbro', 'category': 'Toys & Games | Games & Accessories', 'features': [], 'ingredients': '', 'relevance_score': 0.2488, 'product_url': 'https://www.amazon.com/Hasbro-Gaming-BOP-IT-Chewie/dp/B07MK437KG'}, {'sku': '654f0f2a08e6c6a850fa7a7c8ef1b3f2', 'doc_id': '654f0f2a08e6c6a850fa7a7c8ef1b3f2', 'title': 'Brain Games Voila! Board Game - A Fast and Fun Family Board Game - Play with Kids, Teenagers and Adults - Award Winning Games for Children, Families & Casual Gamers', 'price': 15.59, 'rating': None, 'brand': 'Brain', 'category': 'Toys & Games | Games & Accessories | Board Games', 'features': [], 'ingredients': '', 'relevance_score': 0.2463, 'product_url': 'https://www.amazon.com/BRAIN-GAMES-Voila-Family-Board/dp/B01B2O2NS4'}]
+web_results: [{'title': 'Choosing between a Switch or PS5 to get back into modern gaming?', 'url': 'https://www.reddit.com/r/gamingsuggestions/comments/13jnvvu/choosing_between_a_switch_or_ps5_to_get_back_into/', 'snippet': 'PS5 games are usually cheaper than Switch (exclusive) games. They at least go down in price and occasionally have sales. Nintendo games almost ...', 'price': None, 'availability': None, 'source': 'www.reddit.com'}, {'title': 'Nintendo Switch vs PS5: Which should you buy? - TechRadar', 'url': 'https://www.techradar.com/gaming/nintendo-switch-vs-ps5', 'snippet': "In terms of value, the Switch is vastly cheaper than the PS5 at all levels, but with a new Nintendo console reveal slated for 2025, there's ...", 'price': None, 'availability': None, 'source': 'www.techradar.com'}, {'title': 'Nintendo Switch 2 Vs PlayStation 5! (Comparison) (Review)', 'url': 'https://www.youtube.com/watch?v=s4pxNj0NpQ4', 'snippet': 'Bruh I totally thought he was going to compare frame rates and resolution. 21:06 · Go to channel · Nintendo Switch vs Nintendo Switch 2!', 'price': None, 'availability': None, 'source': 'www.youtube.com'}, {'title': 'Deciding between Switch 2 and PS5 for gaming? - Facebook', 'url': 'https://www.facebook.com/groups/160110789401691/posts/1071394194940008/', 'snippet': 'I have a ps5 and a switch 2. Get the ps5 first. They are pretty much the same price and the ps5 is way more powerful. It already has a big ...', 'price': None, 'availability': None, 'source': 'www.facebook.com'}, {'title': 'Nintendo Switch vs PS5: Which One Is Better', 'url': 'https://recorder.easeus.com/screen-recording-resource/nintendo-switch-vs-ps5.html', 'snippet': 'The Nintendo Switch is less powerful than the PS5 and Xbox Series X, but it is the perfect option for those who love to play games on the move and for family ...', 'price': None, 'availability': None, 'source': 'recorder.easeus.com'}]
+
+--- ANSWERER PAPER ANSWER ---
+When comparing the Nintendo Switch and the PlayStation 5 (PS5), several key differences emerge. The Nintendo Switch is known for its versatility as a hybrid console, allowing for both handheld and docked play, making it ideal for casual gaming and family-friendly titles. In contrast, the PS5 offers superior graphics and performance, catering to gamers seeking immersive experiences with high-end graphics and extensive game libraries, including many exclusive titles.
+
+In terms of pricing, specific prices for the Nintendo Switch and PS5 were not provided in the retrieved data, but it is important to note that live web prices are generally more current than catalog prices. Availability for both consoles is unclear based on the retrieved information, but checking local retailers or online platforms may provide more accurate stock information. For further insights, you may refer to resources like TechRadar's comparison article or community discussions on platforms like Reddit [1][2][3].
+
+--- ANSWERER SPEECH ANSWER ---
+If you're deciding between a Nintendo Switch and a PS5, it really depends on your gaming style. The Switch is great for portability and family-friendly games, while the PS5 offers cutting-edge graphics and a more immersive gaming experience. Prices can vary, but typically, the Switch is more budget-friendly compared to the PS5.
+
+--- CITATIONS ---
+[1] {'title': 'Basic Fun Arcade Classics - Tetris Retro Mini Arcade Game', 'url': 'https://www.amazon.com/Basic-Fun-Arcade-Classics-Tetris/dp/B07CRNZQ97'}
+[2] {'title': 'Marvel I Can Do That! Game', 'url': 'https://www.amazon.com/Marvel-Can-Do-That-Game/dp/B01DDUHO7A'}
+[3] {'title': 'Choosing between a Switch or PS5 to get back into modern gaming?', 'url': 'https://www.reddit.com/r/gamingsuggestions/comments/13jnvvu/choosing_between_a_switch_or_ps5_to_get_back_into/'}
+[4] {'title': 'Nintendo Switch vs PS5: Which should you buy? - TechRadar', 'url': 'https://www.techradar.com/gaming/nintendo-switch-vs-ps5'}
+[5] {'title': 'Nintendo Switch 2 Vs PlayStation 5! (Comparison) (Review)', 'url': 'https://www.youtube.com/watch?v=s4pxNj0NpQ4'}
+
+--- DEBUG LOG (LAST 5 ENTRIES) ---
+[RETRIEVER] rag returned 5 items
+[RETRIEVER] web_search args={'query': 'Compare Nintendo Switch and PS5.', 'num_results': 5}
+[RETRIEVER] web returned 5 items
+[RETRIEVER] Resolved price = None item=None
+[ANSWERER] Generated paper_answer, speech_answer, and citations.
+PS C:\Users\fanmu\PycharmProjects\FinalProject_AppliedGenAI> 

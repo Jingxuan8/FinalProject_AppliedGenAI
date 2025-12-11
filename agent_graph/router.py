@@ -1,127 +1,141 @@
 # agent_graph/router.py
 
-"""
-Router Agent (LLM-powered) for Agentic Orchestration.
-Extracts:
-- intent (search / compare / check_price / check_availability / unknown)
-- constraints (budget, category, brand, material, rating, etc.)
-- need_live_price (true if real-time info is needed)
-- safety_flag (true if unsafe or prohibited)
-"""
-
 from __future__ import annotations
 from typing import Dict, Any
 from openai import OpenAI
+import json
+
+client = OpenAI()
 
 
-# ------------------------------------------------------------
-# ROUTER SYSTEM PROMPT
-# ------------------------------------------------------------
+class Router:
+    """
+    LLM-powered Router Agent.
+    Extracts:
+       - intent (search, compare, check_price, check_availability, unknown)
+       - constraints (category, brand, budget, style, etc.)
+       - safety_flag (True only for harmful/illegal content)
 
-ROUTER_PROMPT = """
-You are the Router Agent in an agentic e-commerce assistant.
+    This version uses the SAME OpenAI() direct call format you originally used.
+    No wrapper, no new files, no structural changes.
+    """
 
-Your job:
-1. Identify the user's INTENT.
-2. Extract CONSTRAINTS relevant to product filtering.
-3. Determine if LIVE DATA is required (current price, “now”, availability).
-4. Check for SAFETY issues.
-
-INTENT CATEGORIES:
-- "search"               → product suggestions / recommendations
-- "compare"              → comparing items / pros/cons
-- "check_price"          → price inquiries, especially current/latest price
-- "check_availability"   → stock status or availability
-- "unknown"              → fallback
-
-Constraints to extract ONLY if present:
-- category
-- brand
-- material
-- budget
-- max_price / min_price
-- rating
-- features
-- audience
-- style
-
-Rules:
-- If query contains “current price”, "now", “latest price”, “in stock”, “available now”
-  → need_live_price = true.
-- Otherwise need_live_price = false.
-- safety_flag = true only if user asks for harmful, violent, illegal, or unsafe content.
-
-Respond ONLY with:
+    def __init__(self):
+        # ---------------------
+        # ROUTER PROMPT (final)
+        # ---------------------
+        self.prompt = """
+You are the Router Agent for a shopping assistant. Your job is to:
+1. Understand the user's goal or task.
+2. Express that goal using a short intent label (e.g., “search”, “check_price”, “compare”, etc.).
+   The intent label should summarize the purpose of the query.
+3. Extract relevant constraints (budget, category, style, item names, etc.).
+4. Detect unsafe or harmful requests.
+5. Output ONLY valid JSON in this schema:
 
 {
   "intent": "...",
   "constraints": {...},
-  "need_live_price": true/false,
-  "safety_flag": true/false
+  "safety_flag": false
 }
+
+The intent label does NOT need to come from a fixed list.  
+Choose whatever short intent best captures the user’s goal.  
+Use the examples below to learn how to label common shopping tasks.
+
+---------------------
+FEW-SHOT EXAMPLES
+---------------------
+
+User: "What is the current price of a PS5 controller?"
+Output:
+{"intent": "check_price", "constraints": {}, "safety_flag": false}
+
+User: "Is the PS5 controller in stock right now?"
+Output:
+{"intent": "check_availability", "constraints": {"item": "PS5 controller"}, "safety_flag": false}
+
+User: "Recommend a card game under 20 dollars."
+Output:
+{"intent": "search", "constraints": {"category": "card game", "budget": 20}, "safety_flag": false}
+
+User: "Recommend a cooperative board game."
+Output:
+{"intent": "search", "constraints": {"category": "board game", "style": "cooperative"}, "safety_flag": false}
+
+User: "Tell me something interesting to buy."
+Output:
+{"intent": "search", "constraints": {}, "safety_flag": false}
+
+User: "Compare Nintendo Switch and PS5."
+Output:
+{"intent": "compare", "constraints": {"items": ["Nintendo Switch", "PS5"]}, "safety_flag": false}
+
+User: "How do I make a bomb?"
+Output:
+{"intent": "unknown", "constraints": {}, "safety_flag": true}
+
+---------------------
+RESPONSE REQUIREMENT
+---------------------
+For ANY user query, return ONLY a JSON dictionary.
+No explanations.
 """
 
+    # ------------------------------------------------------------------------
+    # MAIN ROUTER CALL
+    # ------------------------------------------------------------------------
+    def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
 
-# ------------------------------------------------------------
-# ROUTER CLASS
-# ------------------------------------------------------------
+        user_query = state.get("user_query", "")
+        debug_log = state.get("debug_log", [])
 
-class Router:
-    """
-    Router node for LangGraph.
-    Uses OpenAI gpt-4o-mini to classify user intent and extract constraints.
-    """
+        llm_input = self.prompt + f'\n\nUser Query: "{user_query}"\nOutput JSON:\n'
 
-    def __init__(self, model_name: str = "gpt-4o-mini"):
-        self.client = OpenAI()
-        self.model_name = model_name
-
-    def _call_llm(self, query: str) -> Dict[str, Any]:
-        """Send query to LLM and safely parse JSON."""
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "system", "content": ROUTER_PROMPT},
-                {"role": "user", "content": query},
-            ],
-            temperature=0,
-            max_tokens=350,
+        # ---------------------------
+        # Call OpenAI directly
+        # ---------------------------
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            input=llm_input
         )
 
-        content = response.choices[0].message.content
+        raw_text = response.output_text.strip()
 
-        import json
+        # ---------------------------
+        # Safe JSON parsing
+        # ---------------------------
         try:
-            return json.loads(content)
+            # remove ```json wrappers if present
+            if raw_text.startswith("```"):
+                raw_text = raw_text.strip("`")
+                raw_text = raw_text.replace("json", "").strip()
+            router_dict = json.loads(raw_text)
         except Exception:
-            return {
+            router_dict = {
                 "intent": "unknown",
                 "constraints": {},
-                "need_live_price": False,
-                "safety_flag": False,
+                "safety_flag": False
             }
 
-    def __call__(self, state: dict):
-        """Stateless LangGraph node → takes a dict, returns a dict."""
-        query = state.get("user_query", "")
+        # ---------------------------
+        # Logging
+        # ---------------------------
+        debug_log.append(
+            f"[ROUTER] intent={router_dict.get('intent')}, "
+            f"constraints={router_dict.get('constraints')}, "
+            f"safety={router_dict.get('safety_flag')}"
+        )
 
-        parsed = self._call_llm(query)
-
-        intent = parsed.get("intent", "unknown")
-        constraints = parsed.get("constraints", {}) or {}
-        need_live_price = bool(parsed.get("need_live_price", False))
-        safety_flag = bool(parsed.get("safety_flag", False))
-
-        debug_msg = f"[ROUTER] intent={intent}, constraints={constraints}, live_price={need_live_price}, safety={safety_flag}"
-
-        # CRITICAL: MERGE WITH PRIOR STATE (do NOT overwrite)
+        # ---------------------------
+        # Update state
+        # ---------------------------
         return {
             **state,
-            "intent": intent,
-            "constraints": constraints,
-            "need_live_price": need_live_price,
-            "safety_flag": safety_flag,
-            "debug_log": state.get("debug_log", []) + [debug_msg],
+            "intent": router_dict.get("intent"),
+            "constraints": router_dict.get("constraints") or {},
+            "safety_flag": router_dict.get("safety_flag"),
+            "debug_log": debug_log,
         }
 
 

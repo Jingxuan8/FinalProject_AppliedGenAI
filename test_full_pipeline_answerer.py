@@ -1,0 +1,88 @@
+# test_full_pipeline_answerer.py
+
+from agent_graph.router import Router
+from agent_graph.planner import Planner
+from agent_graph.retriever import Retriever
+from agent_graph.answerer import Answerer
+from agent_graph.mcp_client import MCPClientWrapper
+
+
+def run_test(query: str):
+    print("\n" + "=" * 70)
+    print("USER QUERY:", query)
+    print("=" * 70)
+
+    # --------------------
+    # INITIAL STATE
+    # --------------------
+    state = {
+        "user_query": query,
+        "debug_log": []
+    }
+
+    # --------------------
+    # ROUTER
+    # --------------------
+    router = Router()
+    state = router(state)
+    print("\n--- ROUTER OUTPUT ---")
+    print("intent:", state.get("intent"))
+    print("constraints:", state.get("constraints"))
+    print("safety_flag:", state.get("safety_flag"))
+
+    # --------------------
+    # PLANNER
+    # --------------------
+    planner = Planner()
+    state = planner(state)
+    print("\n--- PLANNER OUTPUT ---")
+    print(state.get("planner_output"))
+
+    # --------------------
+    # RETRIEVER
+    # --------------------
+    retriever = Retriever()
+    retriever.mcp = MCPClientWrapper()
+
+    state = retriever(state)
+
+    print("\n--- RETRIEVER OUTPUT ---")
+    print("retrieval_source:", state.get("retrieval_source"))
+    print("resolved_price:", state.get("resolved_price"))
+    print("resolved_price_item:", state.get("resolved_price_item"))
+    print("rag_results:", state.get("rag_results"))
+    print("web_results:", state.get("web_results"))
+
+    # --------------------
+    # ANSWERER
+    # --------------------
+    answerer = Answerer()
+    state = answerer(state)
+
+    print("\n--- ANSWERER PAPER ANSWER ---")
+    print(state.get("paper_answer"))
+
+    print("\n--- ANSWERER SPEECH ANSWER ---")
+    print(state.get("speech_answer"))
+
+    print("\n--- CITATIONS ---")
+    for i, c in enumerate(state.get("citations", []), 1):
+        print(f"[{i}] {c}")
+
+    print("\n--- DEBUG LOG (LAST 5 ENTRIES) ---")
+    for line in state.get("debug_log", [])[-5:]:
+        print(line)
+
+
+if __name__ == "__main__":
+    test_cases = [
+        "What is the current price of a PS5 controller?",
+        "Is the PS5 controller in stock right now?",
+        "Recommend a card game under 20 dollars.",
+        "Recommend a cooperative board game.",
+        "Tell me something interesting to buy.",
+        "Compare Nintendo Switch and PS5."
+    ]
+
+    for q in test_cases:
+        run_test(q)
