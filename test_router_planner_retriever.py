@@ -1,5 +1,11 @@
 # test_router_planner_retriever.py
 
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv(Path(__file__).parent / ".env")
+
 from agent_graph.router import Router
 from agent_graph.planner import Planner
 from agent_graph.retriever import Retriever

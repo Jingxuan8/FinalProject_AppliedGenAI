@@ -106,7 +106,12 @@ def rag_search(
     config: Optional[Dict[str, Any]] = None,
     filters: Optional[Dict[str, Any]] = None,
     num_results: Optional[int] = None,
-    rerank: Optional[bool] = None
+    rerank: Optional[bool] = None,
+    # Direct filter params for Retriever compatibility
+    category: Optional[str] = None,
+    max_price: Optional[float] = None,
+    min_price: Optional[float] = None,
+    brand: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
     Search the Amazon Product Dataset 2020 (Games & Accessories) catalog.
@@ -116,13 +121,13 @@ def rag_search(
         config: Search configuration (alternative to direct params)
             - num_results: Number of results (1-20, default: 5)
             - rerank: Whether to apply LLM reranking (default: False)
-        filters: Metadata filters
-            - max_price: Maximum price in USD
-            - min_price: Minimum price in USD
-            - category: Product category filter
-            - brand: Brand name filter
-        num_results: Number of results (direct param, overrides config)
-        rerank: Whether to apply LLM reranking (direct param, overrides config)
+        filters: Metadata filters dict
+        num_results: Number of results (direct param)
+        rerank: Whether to apply LLM reranking (direct param)
+        category: Product category filter (direct param for Retriever)
+        max_price: Maximum price in USD (direct param for Retriever)
+        min_price: Minimum price in USD (direct param for Retriever)
+        brand: Brand name filter (direct param for Retriever)
     
     Returns:
         List of products with sku, title, price, rating, brand, category, relevance_score
@@ -137,8 +142,17 @@ def rag_search(
     final_num_results = num_results if num_results is not None else config.get("num_results", 5)
     final_rerank = rerank if rerank is not None else config.get("rerank", False)
     
-    # Parse filters
+    # Parse filters - merge dict filters with direct params
     filters = filters or {}
+    # Direct params override filters dict
+    if category is not None:
+        filters["category"] = category
+    if max_price is not None:
+        filters["max_price"] = max_price
+    if min_price is not None:
+        filters["min_price"] = min_price
+    if brand is not None:
+        filters["brand"] = brand
     
     return _rag_tool.search(
         query=query,

@@ -1,10 +1,14 @@
 """
 Configuration for MCP Server
-All sensitive values should be set via environment variables
+All sensitive values should be set via environment variables or .env file
 """
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file from project root
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Base paths
 BASE_DIR = Path(__file__).parent.parent
