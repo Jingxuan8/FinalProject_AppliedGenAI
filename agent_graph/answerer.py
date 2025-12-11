@@ -1,99 +1,88 @@
-# agent_graph/answerer.py
-
-from __future__ import annotations
-from typing import Dict, Any, List
-
-from .state import AgentState
-
+from openai import OpenAI
 
 class Answerer:
-    """
-    Final Answer Agent.
-    Summarizes retrieved product results into a grounded natural-language response.
+    def __init__(self, model_name="gpt-4o-mini"):
+        self.client = OpenAI()
+        self.model = model_name
 
-    Requirements:
-    - No hallucination (only use fields present in retrieved data)
-    - Respect safety_flag set by Router
-    - Format responses consistently
-    - Distinguish between RAG-based and Web-based results
-    """
+    def __call__(self, state: dict):
+        intent = state.get("intent")
+        rag_results = state.get("rag_results", [])
+        web_results = state.get("web_results", [])
+        user_query = state.get("user_query", "")
+        retrieval_source = state.get("retrieval_source")
 
-    def _format_item(self, item: Dict[str, Any]) -> str:
-        """Format one product into a clean bullet point."""
-        title = item.get("title", "Unknown Product")
-        price = item.get("price")
-        brand = item.get("brand")
-        category = item.get("category")
-        url = item.get("product_url") or item.get("url")
+        selected = []
 
-        parts = [f"**{title}**"]
+        # ----------------------------------------
+        # RULE-BASED SELECTION
+        # ----------------------------------------
+        if intent == "check_price":
+            # pick lowest priced item from web search
+            priced = [w for w in web_results if isinstance(w.get("price"), (int, float))]
+            if priced:
+                best = min(priced, key=lambda x: x["price"])
+                selected = [best]
+            else:
+                selected = web_results[:3] if web_results else []
 
-        if brand:
-            parts.append(f"Brand: {brand}")
+        elif intent == "search":
+            # Prefer RAG results
+            if rag_results:
+                # top 3 by relevance_score
+                ranked = sorted(rag_results, key=lambda x: x.get("relevance_score", 0), reverse=True)
+                selected = ranked[:3]
+            else:
+                # fallback to web
+                selected = web_results[:3]
 
-        if price is not None:
-            parts.append(f"Price: ${price}")
-
-        if category:
-            parts.append(f"Category: {category}")
-
-        if url:
-            parts.append(f"[Link]({url})")
-
-        return " | ".join(parts)
-
-    # ------------------------------------------------------------
-    # Main LangGraph entry point
-    # ------------------------------------------------------------
-    def __call__(self, state: AgentState) -> Dict[str, Any]:
-
-        # ==========================================================
-        # SAFETY CHECK
-        # ==========================================================
-        if getattr(state, "safety_flag", False):
-            return {
-                "final_answer": (
-                    "I'm sorry, but I can’t assist with that request."
-                )
-            }
-
-        results: List[Dict[str, Any]] = state.merged_results or []
-        source = getattr(state, "retrieval_source", None)
-
-        # ==========================================================
-        # NO RESULTS → graceful fallback
-        # ==========================================================
-        if not results:
-            return {
-                "final_answer": (
-                    "I couldn't find matching products for your query. "
-                    "Try adjusting your constraints or rephrasing your request."
-                )
-            }
-
-        # ==========================================================
-        # INTRO TEXT BASED ON SOURCE
-        # ==========================================================
-        if source == "rag":
-            intro = "Here are the top matches from our product catalog:\n\n"
-        elif source == "web":
-            intro = "Here are the most relevant live web results:\n\n"
         else:
-            intro = "Here are the best matched products:\n\n"
+            # unknown intent fallback
+            selected = (rag_results or web_results)[:3]
 
-        # ==========================================================
-        # FORMAT BULLET LIST
-        # ==========================================================
-        bullets = "\n".join(f"- {self._format_item(item)}" for item in results)
+        # handle no results
+        if not selected:
+            state["final_answer"] = "I could not find results for your query based on available data."
+            return state
 
-        final_answer = intro + bullets
+        # ----------------------------------------
+        # LLM FORMATTING
+        # ----------------------------------------
+        llm_prompt = f"""
+You are the Answerer agent in a retrieval-based system.
 
-        debug_msg = f"[ANSWERER] produced_answer_with_{source or 'unknown'}"
+Your job is to answer the user_query ONLY using the retrieved items provided.
+Do NOT hallucinate information not present in the items.
 
-        return {
-            "final_answer": final_answer,
-            "debug_log": state.debug_log + [debug_msg],
-        }
+CRITICAL FORMAT RULES:
+- The answer must sound like natural spoken dialogue.
+- No bullet points, no numbering, no lists.
+- No URLs or Markdown formatting of any kind.
+- No square brackets.
+- Summaries should be smooth, verbal, and under 15 seconds when read aloud.
+- Treat product titles as plain speech (e.g., “a game called Tic Tac Two”).
+- Pricing should be spoken naturally, like “about twelve dollars.”
+- Outputs must be comfortable for TTS to read directly, without visual anchors.
 
+user_query: "{user_query}"
+intent: "{intent}"
+retrieval_source: "{retrieval_source}"
 
-__all__ = ["Answerer"]
+retrieved_items:
+{selected}
+
+Write the final answer directly for the user in fluent spoken English.
+If checking price, say the price naturally.
+If search intent, give two or three spoken recommendations in a single coherent paragraph.
+"""
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "system", "content": llm_prompt}]
+        )
+
+        final = response.choices[0].message.content.strip()
+        state["final_answer"] = final
+        state["debug_log"].append("[ANSWERER] Completed final answer.")
+
+        return state

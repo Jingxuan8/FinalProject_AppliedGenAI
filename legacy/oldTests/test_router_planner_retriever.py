@@ -1,11 +1,5 @@
 # test_router_planner_retriever.py
 
-from pathlib import Path
-from dotenv import load_dotenv
-
-# Load .env file
-load_dotenv(Path(__file__).parent / ".env")
-
 from agent_graph.router import Router
 from agent_graph.planner import Planner
 from agent_graph.retriever import Retriever
@@ -112,18 +106,10 @@ def run_test(query):
 # --------------------------------------------------------
 
 test_cases = [
-    "What is the current price of a PS5 controller?",
-    "Is the PS5 controller in stock right now?",
-    "Recommend a card game under 20 dollars.",
-    "Recommend a cooperative board game.",
-    "Tell me something interesting to buy."
+    "recommend a cooperative board game under 30 dollars",
+    "what is the current price of a ps5 controller",
+    "recommend a popular card game for 4 players",
 ]
-
-# test_cases = [
-#     "recommend a cooperative board game under 30 dollars",
-#     "what is the current price of a ps5 controller",
-#     "recommend a popular card game for 4 players",
-# ]
 
 for q in test_cases:
     run_test(q)

@@ -18,7 +18,6 @@ from .state import AgentState
 from .router import Router
 from .planner import Planner
 from .retriever import Retriever
-from .critic import Critic
 from .answerer import Answerer
 from .mcp_client import MCPClientWrapper
 
@@ -28,7 +27,6 @@ __all__ = [
     "Router",
     "Planner",
     "Retriever",
-    "Critic",
     "Answerer",
     "MCPClientWrapper",
 ]

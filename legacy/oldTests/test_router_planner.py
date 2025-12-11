@@ -60,12 +60,6 @@ def run_test(query):
 # Run three test cases
 # ------------------------------------------------------------
 if __name__ == "__main__":
-    run_test("What is the current price of a PS5 controller?")
-    run_test("Is the PS5 controller in stock right now?")
-    run_test("Recommend a card game under 20 dollars.")
-    run_test("Recommend a cooperative board game.")
-    run_test("Tell me something interesting to buy.")
-
-    # run_test("recommend a cooperative board game under 30 dollars")
-    # run_test("what is the current price of a ps5 controller")
-    # run_test("compare logitech g502 and razer basilisk mice")
+    run_test("recommend a cooperative board game under 30 dollars")
+    run_test("what is the current price of a ps5 controller")
+    run_test("compare logitech g502 and razer basilisk mice")
