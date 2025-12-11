@@ -46,28 +46,36 @@ def run_test(query: str):
 
     state = retriever(state)
 
-    print("\n--- RETRIEVER OUTPUT ---")
-    print("retrieval_source:", state.get("retrieval_source"))
-    print("resolved_price:", state.get("resolved_price"))
-    print("resolved_price_item:", state.get("resolved_price_item"))
-    print("rag_results:", state.get("rag_results"))
-    print("web_results:", state.get("web_results"))
+    # print("\n--- RETRIEVER OUTPUT ---")
+    # print("retrieval_source:", state.get("retrieval_source"))
+    # print("resolved_price:", state.get("resolved_price"))
+    # print("resolved_price_item:", state.get("resolved_price_item"))
+    # print("rag_results:", state.get("rag_results"))
+    # print("web_results:", state.get("web_results"))
 
     # --------------------
     # ANSWERER
     # --------------------
     answerer = Answerer()
     state = answerer(state)
+    # print("\n--- ANSWERER State ---")
+    # print(state)
+    # print("\n--- ANSWERER PAPER ANSWER ---")
+    # print(state.get("paper_answer"))
+    #
+    # print("\n--- ANSWERER SPEECH ANSWER ---")
+    # print(state.get("speech_answer"))
 
-    print("\n--- ANSWERER PAPER ANSWER ---")
+    print("\n--- FINAL ANSWER OUTPUT ---")
+
+    print("\nPaper Answer:")
     print(state.get("paper_answer"))
 
-    print("\n--- ANSWERER SPEECH ANSWER ---")
+    print("\nSpeech Answer:")
     print(state.get("speech_answer"))
 
-    print("\n--- CITATIONS ---")
-    for i, c in enumerate(state.get("citations", []), 1):
-        print(f"[{i}] {c}")
+    print(state)
+    print("\n--- END OF ANSWER OUTPUT ---")
 
     print("\n--- DEBUG LOG (LAST 5 ENTRIES) ---")
     for line in state.get("debug_log", [])[-5:]:
@@ -81,7 +89,6 @@ if __name__ == "__main__":
         "Recommend a card game under 20 dollars.",
         "Recommend a cooperative board game.",
         "Tell me something interesting to buy.",
-        "Compare Nintendo Switch and PS5."
     ]
 
     for q in test_cases:
