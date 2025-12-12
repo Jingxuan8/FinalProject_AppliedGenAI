@@ -100,6 +100,8 @@ The system requires **two concurrent processes**: the MCP tool server and the St
 ### 8.1 Start MCP Server (Tool Backend)
 
 The MCP server exposes structured tools (such as `web_search` and `rag_search`) to the LangGraph agent pipeline.
+After setting up MCP Server, just run the app.py in the terminal
 
 ```bash
 python -m mcp_server.server --transport http --host localhost --port 8765
+python steamlit run app.py
