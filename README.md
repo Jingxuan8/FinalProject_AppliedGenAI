@@ -82,7 +82,6 @@ To make price usable for filtering and ranking:
 	•	If parsing fails, set price = NaN.
 	3.	Drop rows where price is NaN.
 	4.	Remove obviously broken prices using a reasonable range for this category:
-	•	Keep only rows where 2 <= price <= 300.
 
 After these steps we get a set of products with valid IDs, titles, and sensible prices.
 
