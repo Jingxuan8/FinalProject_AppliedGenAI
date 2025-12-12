@@ -333,12 +333,29 @@ class Answerer:
         first = items[0]
 
         speech_prompt = f"""
-        The user asked: "{query}"
+        User asked: "{query}"
 
-        Create a SHORT spoken-style answer (1–2 sentences max) using ONLY this item:
+        You will produce a SHORT, natural spoken-style answer (1–2 sentences max).
+
+        Use ONLY the first selected item shown below:
         {json.dumps(first, indent=2)}
 
-        Mention price if available, and availability. Sound natural.
+        You MUST:
+        - Refer to the store by interpreting the URL hostname.
+        - DO NOT include the URL itself.
+        - Use natural store names. Examples:
+          amazon.com → Amazon
+          gamestop.com → GameStop
+          bestbuy.com → Best Buy
+          walmart.com → Walmart
+          direct.playstation.com → PlayStation Direct
+          xbox.com → Xbox Official Store
+        - Mention price if available.
+        - Mention availability if relevant to the question.
+        - Sound like a salesperson speaking casually, not a report.
+        - Do NOT mention "item one", "JSON", "link", or formatting details.
+
+        Return ONLY the spoken sentence(s).
         """
         state["speech_answer"] = self.llm.invoke(speech_prompt)
 
@@ -369,10 +386,27 @@ class Answerer:
         speech_prompt = f"""
         User asked: "{query}"
 
-        Produce a short spoken-style answer using ONLY this item:
+        You will produce a SHORT, natural spoken-style answer (1–2 sentences max).
+
+        Use ONLY the first selected item shown below:
         {json.dumps(first, indent=2)}
 
-        State clearly whether it is available and optionally the price.
+        You MUST:
+        - Refer to the store by interpreting the URL hostname.
+        - DO NOT include the URL itself.
+        - Use natural store names. Examples:
+          amazon.com → Amazon
+          gamestop.com → GameStop
+          bestbuy.com → Best Buy
+          walmart.com → Walmart
+          direct.playstation.com → PlayStation Direct
+          xbox.com → Xbox Official Store
+        - Mention price if available.
+        - Mention availability if relevant to the question.
+        - Sound like a salesperson speaking casually, not a report.
+        - Do NOT mention "item one", "JSON", "link", or formatting details.
+
+        Return ONLY the spoken sentence(s).
         """
         state["speech_answer"] = self.llm.invoke(speech_prompt)
 
@@ -402,10 +436,27 @@ class Answerer:
         speech_prompt = f"""
         User asked: "{query}"
 
-        Create a concise spoken recommendation using ONLY this first item:
+        You will produce a SHORT, natural spoken-style answer (1–2 sentences max).
+
+        Use ONLY the first selected item shown below:
         {json.dumps(first, indent=2)}
 
-        Mention the price and a short positive comment.
+        You MUST:
+        - Refer to the store by interpreting the URL hostname.
+        - DO NOT include the URL itself.
+        - Use natural store names. Examples:
+          amazon.com → Amazon
+          gamestop.com → GameStop
+          bestbuy.com → Best Buy
+          walmart.com → Walmart
+          direct.playstation.com → PlayStation Direct
+          xbox.com → Xbox Official Store
+        - Mention price if available.
+        - Mention availability if relevant to the question.
+        - Sound like a salesperson speaking casually, not a report.
+        - Do NOT mention "item one", "JSON", "link", or formatting details.
+
+        Return ONLY the spoken sentence(s).
         """
         state["speech_answer"] = self.llm.invoke(speech_prompt)
 
