@@ -72,20 +72,7 @@ These are mapped into a **standardized catalog schema**:
 
 This standardized schema is what downstream RAG and MCP components consume.
 
-### 3.3. Text feature construction
-
-To build a rich text field for embeddings:
-
-1. Fill missing values in `About Product`, `Product Specification`, and `Technical Details` with empty strings.
-2. For each row, strip whitespace and concatenate all non-empty text fields with `" | "` as a separator.
-3. Store the result in a single `features` column.
-
-Example (conceptually):
-
-```text
-"About Product text… | Product Specification text… | Technical Details text…"
-
-### 3.4. Price parsing & sanity checks
+### 3.3. Price parsing & sanity checks
 To make price usable for filtering and ranking:
 	1.	Drop rows where any of the key fields is missing:
 	•	id, title, or price_raw.
