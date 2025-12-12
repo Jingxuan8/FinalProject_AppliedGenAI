@@ -1,476 +1,411 @@
 import json
-from typing import Dict, Any
-from openai import OpenAI
+from urllib.parse import urlparse
 
-
-# =============================================================================
-# SIMPLE LLM WRAPPER — to unify prompt interface (.invoke(prompt))
-# =============================================================================
 class SimpleLLMWrapper:
-    """
-    Provides .invoke(prompt) → text, matching what Answerer expects.
-    Uses OpenAI ChatCompletion behind the scenes.
-    """
-
-    def __init__(self, model="gpt-4o-mini"):
-        self.client = OpenAI()
+    """Very small wrapper so .invoke(prompt) always returns a text string."""
+    def __init__(self, client=None, model="gpt-4o-mini"):
+        self.client = client
         self.model = model
 
     def invoke(self, prompt: str) -> str:
-        resp = self.client.chat.completions.create(
+        if self.client is None:
+            return prompt
+        completion = self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=200,
-            temperature=0.3,
+            max_tokens=300
         )
-        return resp.choices[0].message.content.strip()
+        return completion.choices[0].message["content"]
 
 
-# =============================================================================
-# ANSWERER — FULL VERSION WITH PREPROCESSING + SELECTION + COMPOSITION
-# =============================================================================
 class Answerer:
+    """
+    The Answerer post-processes the retriever output, enforces selection logic,
+    and generates final paper/speech answers. This version enforces *plain text*
+    for all paper answers and uses natural spoken text for speech answers.
+    """
     def __init__(self, llm=None):
-        self.llm = llm or SimpleLLMWrapper()
+        self.llm = llm if llm else SimpleLLMWrapper()
 
-    # -------------------------------------------------------------------------
-    # MAIN ENTRY
-    # -------------------------------------------------------------------------
-    def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    # ---------------------------------------------------------------
+    # Main entry point
+    # ---------------------------------------------------------------
+    def __call__(self, state):
+        debug = state.get("debug_log", [])
+        debug.append("[ANSWERER] Starting answerer logic")
+
+        # ------------------------------------------------------------
+        # SAFETY OVERRIDE — short-circuit everything
+        # ------------------------------------------------------------
         if state.get("safety_flag", False) is True:
-            # Override everything and return refusal responses
             state["selected_items"] = []
             state["paper_answer"] = (
                 "I’m sorry, but your question appears to contain unsafe or prohibited content. "
                 "For safety reasons, I cannot provide assistance with this request."
             )
-            state["speech_answer"] = (
-                "Sorry, I can’t help with that."
-            )
-            state["debug_log"].append("[ANSWERER] Safety override triggered — refusing to answer.")
+            state["speech_answer"] = "Sorry, I can’t help with that."
+            debug.append("[ANSWERER] Safety override triggered — refusing to answer.")
             return state
 
-        debug = state["debug_log"]
-        intent = state.get("intent")
-
-        # Preprocessing
+        # ------------------------------------------------------------
+        # Preprocess both rag_results and web_results for price/availability
+        # ------------------------------------------------------------
         state = self._preprocess_results(state)
 
-        # Selection layer
+        intent = state.get("intent")
         if intent == "check_price":
-            state = self._select_items_for_price(state)
-            state = self._compose_price_answer(state)
+            items = self._select_items_for_price(state)
+            state = self._compose_price_answer(state, items)
 
         elif intent == "check_availability":
-            state = self._select_items_for_availability(state)
-            state = self._compose_availability_answer(state)
+            items = self._select_items_for_availability(state)
+            state = self._compose_availability_answer(state, items)
 
         elif intent == "search":
-            state = self._select_items_for_search(state)
-            state = self._compose_search_answer(state)
+            items = self._select_items_for_search(state)
+            state = self._compose_search_answer(state, items)
 
-        debug.append("[ANSWERER] Finished (full pipeline).")
+        else:
+            state["selected_items"] = []
+            state["paper_answer"] = (
+                "I’m sorry, but I’m not sure how to help with that request."
+            )
+            state["speech_answer"] = (
+                "I’m not sure how to help with that."
+            )
+            debug.append("[ANSWERER] Unknown intent, fallback answer used.")
+
         return state
 
-    # -------------------------------------------------------------------------
-    # PREPROCESSING
-    # -------------------------------------------------------------------------
+    # ---------------------------------------------------------------
+    # Preprocessing of RAG + Web results to fill price & availability
+    # ---------------------------------------------------------------
     def _preprocess_results(self, state):
         rag = state.get("rag_results", [])
         web = state.get("web_results", [])
-        debug = state["debug_log"]
 
-        # ----- RAG ITEMS -----
-        processed_rag = []
-        for it in rag:
-            new_it = dict(it)
-            new_it["availability"] = "available"
-            processed_rag.append(new_it)
+        # Mark all RAG as available
+        for item in rag:
+            item["availability"] = "available"
 
-        # ----- WEB ITEMS -----
-        processed_web = []
-        for it in web:
-            new_it = dict(it)
-            snippet = new_it.get("snippet") or ""
+        # Process web results
+        for w in web:
+            snippet = w.get("snippet", "") or ""
+            price = w.get("price", None)
 
-            # Extract real price
-            price = self._extract_real_price_from_snippet(snippet)
-            new_it["price"] = price
+            safe_price = self._extract_real_price_from_snippet(snippet, price)
+            w["price"] = safe_price
 
-            # Infer availability
-            avail = self._infer_availability_web(snippet)
-            new_it["availability"] = avail
+            avail = self._infer_availability(snippet)
+            w["availability"] = avail
 
-            processed_web.append(new_it)
-
-        state["rag_results"] = processed_rag
-        state["web_results"] = processed_web
-
-        debug.append(f"[ANSWERER] Preprocessing complete: "
-                     f"{len(processed_rag)} rag items, {len(processed_web)} web items.")
+        state["rag_results"] = rag
+        state["web_results"] = web
+        state["debug_log"].append(f"[ANSWERER] Preprocessing complete: {len(rag)} rag items, {len(web)} web items.")
         return state
 
-    # -------------------------------------------------------------------------
-    # UNIFIED ITEM SCHEMA
-    # -------------------------------------------------------------------------
-    def _build_unified_item(self, item, source_type, cleaned_title=None, description=None):
-        return {
-            "title": cleaned_title or item.get("title"),
-            "raw_title": item.get("title"),
+    # ---------------------------------------------------------------
+    # Extract real price
+    # ---------------------------------------------------------------
+    def _extract_real_price_from_snippet(self, snippet, fallback_price):
+        if not snippet:
+            return fallback_price
 
-            "price": item.get("price"),
-            "availability": item.get("availability"),
-            "description": description,
-
-            "url": item.get("url") or item.get("product_url"),
-            "doc_id": item.get("doc_id"),
-            "source_type": source_type,
-
-            "snippet": item.get("snippet"),
-            "category": item.get("category"),
-        }
-
-    # -------------------------------------------------------------------------
-    # TITLE CLEANING
-    # -------------------------------------------------------------------------
-    def _clean_title(self, raw_title: str):
-        prompt = f"""
-        Clean this product title so it contains only the essential product name.
-        Do NOT include store names, marketing phrases, or URLs.
-        Return ONLY the cleaned title.
-
-        Title:
-        {raw_title}
-        """
-        resp = self.llm.invoke(prompt).strip()
-        return resp if resp else raw_title
-
-    # -------------------------------------------------------------------------
-    # RAG RELEVANCE
-    # -------------------------------------------------------------------------
-    def _is_relevant_rag_item(self, user_query, rag_title):
-        prompt = f"""
-        Determine whether this catalog title refers to the SAME real-world item
-        that the user is asking about.
-
-        Respond with ONLY "yes" or "no".
-
-        User query: "{user_query}"
-        Catalog title: "{rag_title}"
-        """
-        resp = self.llm.invoke(prompt).lower()
-        return "yes" in resp
-
-    # -------------------------------------------------------------------------
-    # SHORT DESCRIPTION
-    # -------------------------------------------------------------------------
-    def _generate_short_description(self, item):
-        title = item.get("title") or ""
-        category = item.get("category") or ""
+        if " to " in snippet and "$" in snippet:
+            return None
+        if "$" in snippet and "-" in snippet and "–" in snippet:
+            return None
 
         prompt = f"""
-        Write a brief 1–2 sentence description of this product using ONLY its title
-        and category. Do not invent features.
+Extract a *single real numeric price* from the snippet below, ignoring ranges or filter text.
+If no single real price is present, return: 0
 
-        Title: {title}
-        Category: {category}
-        """
-        return self.llm.invoke(prompt).strip()
+Snippet:
+{snippet}
 
-    # -------------------------------------------------------------------------
-    # PRICE EXTRACTION
-    # -------------------------------------------------------------------------
-    def _extract_real_price_from_snippet(self, snippet):
-        prompt = f"""
-        Extract the REAL item price from the snippet.
-
-        Return JSON: {{"price": number or null}}
-
-        Reject:
-        - ranges ($1–$1250)
-        - filters ($15 to $25)
-        - discount text ("Save $20")
-
-        Accept:
-        - single product prices like "$49.99", "From $29.99", "Now $19.99"
-
-        Snippet:
-        {snippet}
-
-        Return ONLY the JSON.
-        """
+Return JSON only:
+{{
+  "price": number
+}}
+"""
         resp = self.llm.invoke(prompt)
         try:
             data = json.loads(resp)
-            return data.get("price")
-        except:
+            val = data.get("price", 0)
+            if isinstance(val, (int, float)) and val > 0:
+                return val
             return None
+        except:
+            return fallback_price
 
-    # -------------------------------------------------------------------------
-    # AVAILABILITY
-    # -------------------------------------------------------------------------
-    def _infer_availability_web(self, snippet):
+    # ---------------------------------------------------------------
+    # Infer availability for web
+    # ---------------------------------------------------------------
+    def _infer_availability(self, snippet):
+        if not snippet:
+            return "available"
+
         s = snippet.lower()
-        if any(k in s for k in ["out of stock", "unavailable", "sold out", "coming soon", "temporarily"]):
-            return "unavailable"
+        deny = ["out of stock", "sold out", "unavailable", "coming soon", "temporarily out of stock", "low stock"]
+        for key in deny:
+            if key in s:
+                return "unavailable"
         return "available"
 
-    # =============================================================================
-    # SELECTION LAYERS
-    # =============================================================================
+    # ---------------------------------------------------------------
+    # Clean title using LLM
+    # ---------------------------------------------------------------
+    def _clean_title(self, raw_title):
+        prompt = f"""
+Clean the product title to be short and natural.
 
-    # -------------------------------------------------------------------------
-    # PRICE
-    # -------------------------------------------------------------------------
+Raw title:
+{raw_title}
+
+Return only the cleaned title.
+"""
+        return self.llm.invoke(prompt).strip()
+
+    # ---------------------------------------------------------------
+    # RAG relevance check
+    # ---------------------------------------------------------------
+    def _rag_is_relevant(self, user_query, rag_title):
+        prompt = f"""
+User asked: "{user_query}"
+
+Is this RAG item the *same or strongly matching* product?
+
+Title: "{rag_title}"
+
+Return only "yes" or "no".
+"""
+        resp = self.llm.invoke(prompt).strip().lower()
+        return (resp == "yes")
+
+    # ---------------------------------------------------------------
+    # Short description for search items
+    # ---------------------------------------------------------------
+    def _make_short_description(self, title):
+        prompt = f"""
+Write a short, plain-text, 1–2 sentence description of this product:
+"{title}"
+
+Do NOT use markdown or special formatting.
+Return only plain text.
+"""
+        return self.llm.invoke(prompt).strip()
+
+    # ---------------------------------------------------------------
+    # Unified schema builder
+    # ---------------------------------------------------------------
+    def _unify_schema(self, item, source_type):
+        url = item.get("url") or item.get("product_url")
+        snippet = item.get("snippet")
+        category = item.get("category")
+        doc_id = item.get("doc_id")
+        price = item.get("price")
+        avail = item.get("availability", "unknown")
+        raw_title = item.get("title")
+        cleaned_title = self._clean_title(raw_title)
+
+        return {
+            "title": cleaned_title,
+            "raw_title": raw_title,
+            "price": price if price is not None else None,
+            "availability": avail,
+            "description": None,
+            "url": url,
+            "doc_id": doc_id,
+            "source_type": source_type,
+            "snippet": snippet,
+            "category": category
+        }
+
+    # ---------------------------------------------------------------
+    # Item selection logic
+    # ---------------------------------------------------------------
     def _select_items_for_price(self, state):
-        debug = state["debug_log"]
-        web_items = state.get("web_results", [])
+        web = state.get("web_results", [])
+        unified = [self._unify_schema(w, "web") for w in web]
 
-        processed = []
-        for it in web_items:
-            cleaned = self._clean_title(it.get("title", ""))
-            unified = self._build_unified_item(it, "web", cleaned_title=cleaned)
-            processed.append(unified)
+        with_price = [x for x in unified if isinstance(x["price"], (int, float))]
+        without = [x for x in unified if x["price"] is None]
 
-        def sort_key(x):
-            p = x.get("price")
-            return (0, p) if p is not None else (1, float("inf"))
+        with_price_sorted = sorted(with_price, key=lambda x: x["price"])
 
-        sorted_items = sorted(processed, key=sort_key)
-        debug.append(f"[ANSWERER] Price order: {[i['price'] for i in sorted_items]}")
+        final_list = with_price_sorted + without
+        final_list = final_list[:3]
 
-        selected = sorted_items[:3]
+        state["debug_log"].append("[ANSWERER] Price order: " + str([x["price"] for x in final_list]))
+        return final_list
 
-        while len(selected) < 3:
-            selected.append({
-                "title": None, "raw_title": None,
-                "price": None, "availability": "unknown",
-                "description": None, "url": None,
-                "doc_id": None, "source_type": "web",
-                "snippet": None, "category": None
-            })
-
-        state["selected_items"] = selected
-        return state
-
-    # -------------------------------------------------------------------------
-    # AVAILABILITY
-    # -------------------------------------------------------------------------
     def _select_items_for_availability(self, state):
-        user_query = state["user_query"]
+        user_query = state.get("user_query", "")
         rag = state.get("rag_results", [])
         web = state.get("web_results", [])
 
-        # 1. Relevant rag
         relevant_rag = []
-        for it in rag:
-            if self._is_relevant_rag_item(user_query, it.get("title", "")):
-                unified = self._build_unified_item(it, "rag", cleaned_title=it.get("title"))
-                relevant_rag.append(unified)
+        fallback_rag = []
 
-        # 2. Web items
-        processed_web = []
-        for it in web:
-            cleaned = self._clean_title(it.get("title", ""))
-            unified = self._build_unified_item(it, "web", cleaned_title=cleaned)
-            processed_web.append(unified)
+        for r in rag:
+            if self._rag_is_relevant(user_query, r.get("title", "")):
+                relevant_rag.append(self._unify_schema(r, "rag"))
+            else:
+                fallback_rag.append(self._unify_schema(r, "rag"))
 
-        web_available = [w for w in processed_web if w.get("availability") == "available"]
-        web_unavailable = [w for w in processed_web if w.get("availability") == "unavailable"]
+        web_u = [self._unify_schema(w, "web") for w in web]
+        web_avail = [x for x in web_u if x["availability"] == "available"]
+        web_unavail = [x for x in web_u if x["availability"] == "unavailable"]
 
-        ordered = relevant_rag + web_available + web_unavailable
-        selected = ordered[:3]
+        combined = relevant_rag + web_avail + web_unavail + fallback_rag
+        combined = combined[:3]
+        return combined
 
-        while len(selected) < 3:
-            selected.append({
-                "title": None, "raw_title": None,
-                "price": None, "availability": "unknown",
-                "description": None, "url": None,
-                "doc_id": None, "source_type": "mixed",
-                "snippet": None, "category": None
-            })
-
-        state["selected_items"] = selected
-        return state
-
-    # -------------------------------------------------------------------------
-    # SEARCH
-    # -------------------------------------------------------------------------
     def _select_items_for_search(self, state):
         rag = state.get("rag_results", [])
-        selected = []
+        unified = [self._unify_schema(r, "rag") for r in rag[:3]]
 
-        for it in rag[:3]:
-            desc = self._generate_short_description(it)
-            unified = self._build_unified_item(it, "rag", cleaned_title=it.get("title"), description=desc)
-            selected.append(unified)
+        for item in unified:
+            item["description"] = self._make_short_description(item["title"])
 
-        while len(selected) < 3:
-            selected.append({
-                "title": None, "raw_title": None,
-                "price": None, "availability": "unknown",
-                "description": None, "url": None,
-                "doc_id": None, "source_type": "rag",
-                "snippet": None, "category": None
-            })
+        return unified[:3]
 
-        state["selected_items"] = selected
-        return state
+    # ---------------------------------------------------------------
+    # Answer Composition (PLAIN TEXT ONLY)
+    # ---------------------------------------------------------------
+    def _compose_price_answer(self, state, items):
+        query = state.get("user_query", "")
+        state["selected_items"] = items
 
-    # =============================================================================
-    # ANSWER COMPOSITION LAYER
-    # =============================================================================
+        lines = []
+        lines.append(f"Here are the current prices related to your request: {query}")
+        lines.append("")
 
-    # -------------------------------------------------------------------------
-    # PRICE → paper + speech
-    # -------------------------------------------------------------------------
-    def _compose_price_answer(self, state):
-        items = state["selected_items"]
-        query = state["user_query"]
+        for idx, it in enumerate(items, 1):
+            title = it.get("title", "")
+            price = it.get("price")
+            price_text = f"${price:.2f}" if isinstance(price, (int, float)) else "Price unavailable"
+            avail = it.get("availability", "unknown")
+            url = it.get("url", "")
+            lines.append(f"{idx}. {title}")
+            lines.append(f"   Price: {price_text}")
+            lines.append(f"   Availability: {avail}")
+            lines.append(f"   Link: {url}")
+            lines.append("")
 
-        paper_prompt = f"""
-        Write a helpful written answer for the user.
+        plain_text = "\n".join(lines)
+        state["paper_answer"] = plain_text
 
-        The user asked: "{query}"
-
-        Below are the 3 selected products. 
-        Create a short intro sentence. Then present the items in a clean bullet list.
-        You MUST include: title, price (or "price unavailable"), availability, and a brief 1–2 sentence summary.
-
-        Items JSON:
-        {json.dumps(items, indent=2)}
-        """
-        state["paper_answer"] = self.llm.invoke(paper_prompt)
-
-        # Speech answer uses ONLY the first item.
+        # ---------------- Speech Answer ----------------
         first = items[0]
-
         speech_prompt = f"""
-        User asked: "{query}"
+User asked: "{query}"
 
-        You will produce a SHORT, natural spoken-style answer (1–2 sentences max).
+Create a SHORT spoken-style answer (1–2 sentences).
+Use ONLY this item:
+{json.dumps(first, indent=2)}
 
-        Use ONLY the first selected item shown below:
-        {json.dumps(first, indent=2)}
+Rules:
+- Extract store name from the hostname in the item's URL.
+- Examples:
+  amazon.com → Amazon
+  gamestop.com → GameStop
+  bestbuy.com → Best Buy
+  direct.playstation.com → PlayStation Direct
+  xbox.com → Xbox Official Store
+- Do NOT say any URL.
+- Mention price if available.
+- Sound natural, like a salesperson.
 
-        You MUST:
-        - Refer to the store by interpreting the URL hostname.
-        - DO NOT include the URL itself.
-        - Use natural store names. Examples:
-          amazon.com → Amazon
-          gamestop.com → GameStop
-          bestbuy.com → Best Buy
-          walmart.com → Walmart
-          direct.playstation.com → PlayStation Direct
-          xbox.com → Xbox Official Store
-        - Mention price if available.
-        - Mention availability if relevant to the question.
-        - Sound like a salesperson speaking casually, not a report.
-        - Do NOT mention "item one", "JSON", "link", or formatting details.
-
-        Return ONLY the spoken sentence(s).
-        """
+Return ONLY the spoken sentence.
+"""
         state["speech_answer"] = self.llm.invoke(speech_prompt)
 
         return state
 
-    # -------------------------------------------------------------------------
-    # AVAILABILITY → paper + speech
-    # -------------------------------------------------------------------------
-    def _compose_availability_answer(self, state):
-        items = state["selected_items"]
-        query = state["user_query"]
+    def _compose_availability_answer(self, state, items):
+        query = state.get("user_query", "")
+        state["selected_items"] = items
 
-        paper_prompt = f"""
-        Write a helpful written answer regarding product availability.
+        lines = []
+        lines.append(f"Here is what I found about availability for your request: {query}")
+        lines.append("")
 
-        User asked: "{query}"
+        for idx, it in enumerate(items, 1):
+            title = it["title"]
+            price = it["price"]
+            price_text = f"${price:.2f}" if isinstance(price, (int, float)) else "Price unavailable"
+            avail = it.get("availability", "unknown")
+            url = it.get("url", "")
+            lines.append(f"{idx}. {title}")
+            lines.append(f"   Availability: {avail}")
+            lines.append(f"   Price: {price_text}")
+            lines.append(f"   Link: {url}")
+            lines.append("")
 
-        Provide an intro sentence explaining whether these options appear in stock.
-        Then list all 3 items in bullets, including: title, availability, price if present,
-        and a short 1–2 sentence explanation.
+        plain_text = "\n".join(lines)
+        state["paper_answer"] = plain_text
 
-        Items:
-        {json.dumps(items, indent=2)}
-        """
-        state["paper_answer"] = self.llm.invoke(paper_prompt)
-
+        # ---------------- Speech Answer ----------------
         first = items[0]
         speech_prompt = f"""
-        User asked: "{query}"
+User asked: "{query}"
 
-        You will produce a SHORT, natural spoken-style answer (1–2 sentences max).
+Create a SHORT spoken-style answer (1–2 sentences).
+Use ONLY this item:
+{json.dumps(first, indent=2)}
 
-        Use ONLY the first selected item shown below:
-        {json.dumps(first, indent=2)}
+Rules:
+- Extract store name from the hostname.
+- No URLs.
+- State clearly if the item appears available or unavailable.
+- Sound like a real spoken sentence.
 
-        You MUST:
-        - Refer to the store by interpreting the URL hostname.
-        - DO NOT include the URL itself.
-        - Use natural store names. Examples:
-          amazon.com → Amazon
-          gamestop.com → GameStop
-          bestbuy.com → Best Buy
-          walmart.com → Walmart
-          direct.playstation.com → PlayStation Direct
-          xbox.com → Xbox Official Store
-        - Mention price if available.
-        - Mention availability if relevant to the question.
-        - Sound like a salesperson speaking casually, not a report.
-        - Do NOT mention "item one", "JSON", "link", or formatting details.
-
-        Return ONLY the spoken sentence(s).
-        """
+Return ONLY the spoken sentence.
+"""
         state["speech_answer"] = self.llm.invoke(speech_prompt)
 
         return state
 
-    # -------------------------------------------------------------------------
-    # SEARCH → paper + speech
-    # -------------------------------------------------------------------------
-    def _compose_search_answer(self, state):
-        items = state["selected_items"]
-        query = state["user_query"]
+    def _compose_search_answer(self, state, items):
+        query = state.get("user_query", "")
+        state["selected_items"] = items
 
-        paper_prompt = f"""
-        Write a written product recommendation response.
+        lines = []
+        lines.append(f"Here are some product suggestions related to your request: {query}")
+        lines.append("")
 
-        User asked: "{query}"
+        for idx, it in enumerate(items, 1):
+            title = it["title"]
+            desc = it.get("description", "")
+            price = it["price"]
+            price_text = f"${price:.2f}" if isinstance(price, (int, float)) else "Price unavailable"
+            url = it.get("url", "")
+            lines.append(f"{idx}. {title}")
+            lines.append(f"   Price: {price_text}")
+            lines.append(f"   Description: {desc}")
+            lines.append(f"   Link: {url}")
+            lines.append("")
 
-        Begin with a short friendly sentence. Then list the 3 selected products
-        with: title, price, availability, and the item description given in the JSON.
+        plain_text = "\n".join(lines)
+        state["paper_answer"] = plain_text
 
-        Items:
-        {json.dumps(items, indent=2)}
-        """
-        state["paper_answer"] = self.llm.invoke(paper_prompt)
-
+        # ---------------- Speech Answer ----------------
         first = items[0]
         speech_prompt = f"""
-        User asked: "{query}"
+User asked: "{query}"
 
-        You will produce a SHORT, natural spoken-style answer (1–2 sentences max).
+Create a SHORT spoken suggestion (1–2 sentences).
+Use ONLY this item:
+{json.dumps(first, indent=2)}
 
-        Use ONLY the first selected item shown below:
-        {json.dumps(first, indent=2)}
+Rules:
+- Extract store name from URL hostname.
+- Do NOT mention the URL.
+- Sound natural and conversational, like a salesperson.
 
-        You MUST:
-        - Refer to the store by interpreting the URL hostname.
-        - DO NOT include the URL itself.
-        - Use natural store names. Examples:
-          amazon.com → Amazon
-          gamestop.com → GameStop
-          bestbuy.com → Best Buy
-          walmart.com → Walmart
-          direct.playstation.com → PlayStation Direct
-          xbox.com → Xbox Official Store
-        - Mention price if available.
-        - Mention availability if relevant to the question.
-        - Sound like a salesperson speaking casually, not a report.
-        - Do NOT mention "item one", "JSON", "link", or formatting details.
-
-        Return ONLY the spoken sentence(s).
-        """
+Return ONLY the spoken sentence.
+"""
         state["speech_answer"] = self.llm.invoke(speech_prompt)
 
         return state
