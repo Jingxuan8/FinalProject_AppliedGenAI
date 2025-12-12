@@ -199,6 +199,15 @@ Install dependencies:
 
 pip install -r requirements.txt
 
+# Speech Recognition (Whisper).
+This project uses OpenAI’s Whisper model for automatic speech recognition (ASR). Install Whisper via pip install openai-whisper, then load the small model at runtime. On first use, Whisper automatically downloads the model weights and caches them locally. For portability and deployment convenience, the cached small.pt model file can be copied from the Whisper cache directory into the project root, allowing the ASR component to run without re-downloading the model on subsequent executions.
+
+- !pip install openai-whisper
+- import whisper, os, shutil 
+- model = whisper.load_model("small") 
+- cache_dir = os.path.expanduser("~/.cache/whisper") 
+- src = os.path.join(cache_dir, "small.pt") 
+- dst = "small.pt"
 
 ## 9. Run Scripts
 
