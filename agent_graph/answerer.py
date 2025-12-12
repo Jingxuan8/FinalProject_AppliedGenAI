@@ -37,6 +37,19 @@ class Answerer:
     # MAIN ENTRY
     # -------------------------------------------------------------------------
     def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        if state.get("safety_flag", False) is True:
+            # Override everything and return refusal responses
+            state["selected_items"] = []
+            state["paper_answer"] = (
+                "I’m sorry, but your question appears to contain unsafe or prohibited content. "
+                "For safety reasons, I cannot provide assistance with this request."
+            )
+            state["speech_answer"] = (
+                "Sorry, I can’t help with that."
+            )
+            state["debug_log"].append("[ANSWERER] Safety override triggered — refusing to answer.")
+            return state
+
         debug = state["debug_log"]
         intent = state.get("intent")
 
