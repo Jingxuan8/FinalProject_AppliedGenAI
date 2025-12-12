@@ -103,28 +103,32 @@ def run_rag_pipeline(user_query: str):
     graph = get_rag_graph()
 
     final_state = graph.invoke({"user_query": user_query})
+    if final_state.get("safety_flag", False) is True:
+        answer = final_state.get("speech_answer") or ""
+        paper_answer = final_state.get("paper_answer") or ""
+        comparison_data = {
+        "Name": ["","",""],
+        "Price ($)": ["","",""],
+        "Reference Link": ["","",""],
+        "Doc ID": ["","",""],
+        }
+        df = pd.DataFrame(comparison_data)
+        debug_log = final_state.get("debug_log", [])
+        return answer, df, paper_answer, debug_log
 
     # pick top 3 and extract
-    max_items = 3
-    web_len = min(len(final_state.get("web_results")), max_items)
-    rag_len = min(len(final_state.get("rag_results")), max_items - web_len)
+    max_items = max(3, len(final_state.get("selected_items")))
 
     product_names = []
     product_prices = []
     product_urls = []
     product_docs = []
-    if web_len != 0:
-        for i in range(web_len):
-            product_names.append(final_state.get("web_results")[i]["title"])
-            product_prices.append(safe_price(final_state.get('web_results')[i]['price']))
-            product_urls.append(final_state.get("web_results")[i]["url"])
-            product_docs.append("")
 
-    for i in range(rag_len):
-        product_names.append(final_state.get("rag_results")[i+web_len]["title"])
-        product_prices.append(safe_price(final_state.get('rag_results')[i]['price']))
-        product_urls.append(final_state.get("rag_results")[i+web_len]["product_url"])
-        product_docs.append(final_state.get("rag_results")[i+web_len]["doc_id"])
+    for i in range(max_items):
+        product_names.append(final_state.get("selected_items")[i]["title"])
+        product_prices.append(safe_price(final_state.get('selected_items')[i]['price']))
+        product_urls.append(final_state.get("selected_items")[i]["url"])
+        product_docs.append(final_state.get("selected_items")[i]["doc_id"])
 
     comparison_data = {
         "Name": product_names,
@@ -135,8 +139,6 @@ def run_rag_pipeline(user_query: str):
 
     df = pd.DataFrame(comparison_data)
     df.index = df.index + 1
-
-    print(final_state.get("web_results"))
 
     answer = final_state.get("speech_answer") or ""
     paper_answer = final_state.get("paper_answer") or ""
@@ -181,7 +183,7 @@ def synthesize_answer_to_wav(answer_text: str) -> bytes:
             model="gpt-4o-mini-tts",
             voice="nova", # avalible: 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse', 'ballad', 'ash', 'sage', 'marin', and 'cedar'
             input=chunk,
-            speed=1.7,  # (optionally speed up)
+            speed=1.3,  # (optionally speed up)
             response_format="wav"
         )
 

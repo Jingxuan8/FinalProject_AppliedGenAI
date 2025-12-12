@@ -329,16 +329,50 @@ class Answerer:
         query = state["user_query"]
 
         paper_prompt = f"""
-        Write a helpful written answer for the user.
+        You are writing a simple, clean product recommendation response in plain text.
 
         The user asked: "{query}"
 
-        Below are the 3 selected products. 
-        Create a short intro sentence. Then present the items in a clean bullet list.
-        You MUST include: title, price (or "price unavailable"), availability, and a brief 1–2 sentence summary.
+        Write:
+        1) One short introductory sentence.
+        2) A numbered list (1., 2., 3.) of the three selected items.
+        3) Each item should be written as 1–2 natural sentences that clearly include:
+           - the product title,
+           - its price (or the phrase "price unavailable"),
+           - its availability status,
+           - and a brief helpful description summarizing what the item is.
 
-        Items JSON:
+        RULES:
+        - Absolutely no markdown (no *, no -, no bold, no italics).
+        - Use plain text only.
+        - Do not include URLs.
+        - Do not mention JSON fields.
+        - Do not invent features not present in the item data.
+        - Keep it simple and readable.
+
+        Here are three EXAMPLES of the desired style (DO NOT COPY EXACT WORDING, just follow the tone):
+
+        Example A:
+        1. The Xbox Wireless Controller ($49.99, available) is a versatile gamepad that works with Xbox consoles and PCs, offering responsive controls for casual and competitive play.
+        2. The PowerA Wired Controller ($24.99, available) provides an affordable option with solid build quality, ideal for everyday gaming.
+        3. The Elite Series 2 Controller ($179.99, unavailable) is a premium upgrade with swappable components for players seeking advanced customization.
+
+        Example B:
+        1. The Settlers of Catan Board Game ($44.99, available) is a classic strategy title where players trade resources and build settlements.
+        2. The Ticket to Ride Board Game ($37.99, available) offers easy-to-learn rules and relaxing map-building gameplay.
+        3. Pandemic ($39.99, unavailable) is a cooperative game where players work together to stop global outbreaks.
+
+        Example C:
+        1. The Bicycle Standard Playing Cards ($3.99, available) are durable everyday cards great for family games.
+        2. The Uno Card Game ($6.99, available) is a fast, colorful party game that’s simple for all ages.
+        3. The Exploding Kittens Card Game ($19.99, unavailable) is a humorous strategy game with quick rounds.
+
+        Now generate your answer using the three selected items below.
+
+        Items to summarize:
         {json.dumps(items, indent=2)}
+
+        Return only the final plain-text answer.
         """
         state["paper_answer"] = self.llm.invoke(paper_prompt)
 
@@ -382,16 +416,50 @@ class Answerer:
         query = state["user_query"]
 
         paper_prompt = f"""
-        Write a helpful written answer regarding product availability.
+        You are writing a simple, clean product recommendation response in plain text.
 
-        User asked: "{query}"
+        The user asked: "{query}"
 
-        Provide an intro sentence explaining whether these options appear in stock.
-        Then list all 3 items in bullets, including: title, availability, price if present,
-        and a short 1–2 sentence explanation.
+        Write:
+        1) One short introductory sentence.
+        2) A numbered list (1., 2., 3.) of the three selected items.
+        3) Each item should be written as 1–2 natural sentences that clearly include:
+           - the product title,
+           - its price (or the phrase "price unavailable"),
+           - its availability status,
+           - and a brief helpful description summarizing what the item is.
 
-        Items:
+        RULES:
+        - Absolutely no markdown (no *, no -, no bold, no italics).
+        - Use plain text only.
+        - Do not include URLs.
+        - Do not mention JSON fields.
+        - Do not invent features not present in the item data.
+        - Keep it simple and readable.
+
+        Here are three EXAMPLES of the desired style (DO NOT COPY EXACT WORDING, just follow the tone):
+
+        Example A:
+        1. The Xbox Wireless Controller ($49.99, available) is a versatile gamepad that works with Xbox consoles and PCs, offering responsive controls for casual and competitive play.
+        2. The PowerA Wired Controller ($24.99, available) provides an affordable option with solid build quality, ideal for everyday gaming.
+        3. The Elite Series 2 Controller ($179.99, unavailable) is a premium upgrade with swappable components for players seeking advanced customization.
+
+        Example B:
+        1. The Settlers of Catan Board Game ($44.99, available) is a classic strategy title where players trade resources and build settlements.
+        2. The Ticket to Ride Board Game ($37.99, available) offers easy-to-learn rules and relaxing map-building gameplay.
+        3. Pandemic ($39.99, unavailable) is a cooperative game where players work together to stop global outbreaks.
+
+        Example C:
+        1. The Bicycle Standard Playing Cards ($3.99, available) are durable everyday cards great for family games.
+        2. The Uno Card Game ($6.99, available) is a fast, colorful party game that’s simple for all ages.
+        3. The Exploding Kittens Card Game ($19.99, unavailable) is a humorous strategy game with quick rounds.
+
+        Now generate your answer using the three selected items below.
+
+        Items to summarize:
         {json.dumps(items, indent=2)}
+
+        Return only the final plain-text answer.
         """
         state["paper_answer"] = self.llm.invoke(paper_prompt)
 
@@ -433,15 +501,50 @@ class Answerer:
         query = state["user_query"]
 
         paper_prompt = f"""
-        Write a written product recommendation response.
+        You are writing a simple, clean product recommendation response in plain text.
 
-        User asked: "{query}"
+        The user asked: "{query}"
 
-        Begin with a short friendly sentence. Then list the 3 selected products
-        with: title, price, availability, and the item description given in the JSON.
+        Write:
+        1) One short introductory sentence.
+        2) A numbered list (1., 2., 3.) of the three selected items.
+        3) Each item should be written as 1–2 natural sentences that clearly include:
+           - the product title,
+           - its price (or the phrase "price unavailable"),
+           - its availability status,
+           - and a brief helpful description summarizing what the item is.
 
-        Items:
+        RULES:
+        - Absolutely no markdown (no *, no -, no bold, no italics).
+        - Use plain text only.
+        - Do not include URLs.
+        - Do not mention JSON fields.
+        - Do not invent features not present in the item data.
+        - Keep it simple and readable.
+
+        Here are three EXAMPLES of the desired style (DO NOT COPY EXACT WORDING, just follow the tone):
+
+        Example A:
+        1. The Xbox Wireless Controller ($49.99, available) is a versatile gamepad that works with Xbox consoles and PCs, offering responsive controls for casual and competitive play.
+        2. The PowerA Wired Controller ($24.99, available) provides an affordable option with solid build quality, ideal for everyday gaming.
+        3. The Elite Series 2 Controller ($179.99, unavailable) is a premium upgrade with swappable components for players seeking advanced customization.
+
+        Example B:
+        1. The Settlers of Catan Board Game ($44.99, available) is a classic strategy title where players trade resources and build settlements.
+        2. The Ticket to Ride Board Game ($37.99, available) offers easy-to-learn rules and relaxing map-building gameplay.
+        3. Pandemic ($39.99, unavailable) is a cooperative game where players work together to stop global outbreaks.
+
+        Example C:
+        1. The Bicycle Standard Playing Cards ($3.99, available) are durable everyday cards great for family games.
+        2. The Uno Card Game ($6.99, available) is a fast, colorful party game that’s simple for all ages.
+        3. The Exploding Kittens Card Game ($19.99, unavailable) is a humorous strategy game with quick rounds.
+
+        Now generate your answer using the three selected items below.
+
+        Items to summarize:
         {json.dumps(items, indent=2)}
+
+        Return only the final plain-text answer.
         """
         state["paper_answer"] = self.llm.invoke(paper_prompt)
 
