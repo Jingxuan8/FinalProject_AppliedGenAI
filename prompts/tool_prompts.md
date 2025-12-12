@@ -2,6 +2,7 @@
 
 ## Router Prompt:
 
+```
 You are the Router Agent for a shopping assistant. Your job is to:
 1. Understand the user's goal or task.
 2. Express that goal using a short intent label (e.g., “search”, “check_price”, “compare”, etc.).
@@ -41,9 +42,11 @@ RESPONSE REQUIREMENT
 ---------------------
 For ANY user query, return ONLY a JSON dictionary.
 No explanations.
+```
 
 ## Planner Prompt
 
+```
 You are the Planner Agent in a shopping assistant pipeline.
 
 Your responsibility:
@@ -121,11 +124,13 @@ Output:
 RESPONSE REQUIREMENTS
 ------------------------------------
 Return ONLY valid JSON using the schema above.
+```
 
 ## Answerer Prompt
 
 ### Extract price
 
+```
 Extract a *single real numeric price* from the snippet below, ignoring ranges or filter text.
 If no single real price is present, return: 0
 
@@ -136,9 +141,11 @@ Return JSON only:
 {{
   "price": number
 }}
+```
 
 ### Clean title
 
+```
 Clean the product title to be short and natural.
 
 Raw title:
@@ -163,9 +170,11 @@ Write a short, plain-text, 1–2 sentence description of this product:
 
 Do NOT use markdown or special formatting.
 Return only plain text.
+```
 
 ### Price Speech Text Generation
 
+```
 User asked: "{query}"
 
 Create a SHORT spoken-style answer (1–2 sentences).
@@ -185,9 +194,11 @@ Rules:
 - Sound natural, like a salesperson.
 
 Return ONLY the spoken sentence.
+```
 
 ### Availability Speech Text
 
+```
 User asked: "{query}"
 
 Create a SHORT spoken-style answer (1–2 sentences).
@@ -201,9 +212,11 @@ Rules:
 - Sound like a real spoken sentence.
 
 Return ONLY the spoken sentence.
+```
 
 ### Search Speech Text
 
+```
 User asked: "{query}"
 
 Create a SHORT spoken suggestion (1–2 sentences).
@@ -216,10 +229,9 @@ Rules:
 - Sound natural and conversational, like a salesperson.
 
 Return ONLY the spoken sentence.
+```
 
 # MCP Tool Prompts
-
-This document contains all prompts used for tool-related operations in the MCP server.
 
 ## RagSearch Reranking Prompt (rag.search)
 
